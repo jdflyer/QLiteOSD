@@ -34,17 +34,18 @@
 
 /* ----------------------------------------------------- */
 
+#include "config.h"
 #include <MSP.h>
 #include "MSP_OSD.h"
 #include "OSD_positions_config.h"
 #include <Adafruit_BMP280.h>  // May need to adjust for I2C address #define BMP280_ADDRESS  (0x76)
 
-#define VERSION "1.5"
+#define VERSION "1.6"
 #define BMP_ADDRESS 0x76              // default is 0x77
 #define SPEED_IN_KILOMETERS_PER_HOUR  //if commented out defaults to m/s
-#define IMPERIAL_UNITS                //Altitude in feet, distance to home in miles.
 #define FC_FIRMWARE_NAME "Betaflight"
 #define FC_FIRMWARE_IDENTIFIER "BTFL"
+#define CONFIG "/conf.txt"
 
 #ifdef USE_GPS
 #include <TinyGPS++.h>
@@ -63,6 +64,7 @@ static const uint32_t GPSBaud = 9600;
 #include <SPI.h>
 #include <FS.h>
 #include <time.h>
+#include "web_interface.h"
 static const uint8_t fileServerModePin = D3;  //Pin used to check what mode the program should start in, if high the filesystem server will be started
 static bool fileServerOn = false;
 static uint32_t gpsLogInterval = 500;
@@ -91,14 +93,13 @@ TinyGPSPlus gps;
 SoftwareSerial gpsSerial(gps_RX_pin, gps_TX_pin);
 #endif
 
-#ifdef USE_PWM_ARM
 #ifdef ESP8266
 static const int pwm_arm_pin = D5;
 #else
-static const int pwm_arm_pin = 10;
+static const int pwm_arm_pin = 10; // pro mini arduino
 #endif
 static int triggerValue = 1700;
-#endif
+
 
 HardwareSerial &mspSerial = Serial;
 MSP msp;
@@ -129,7 +130,6 @@ boolean activityDetected = false;
 
 //Other
 const char fcVariant[5] = "BTFL";
-const char craftname[15] = "QLiteOSD";
 uint32_t previousMillis_MSP = 0;
 const uint32_t next_interval_MSP = 100;
 uint32_t custom_mode = 0;  //flight mode
@@ -189,18 +189,17 @@ void setup() {
   msp.begin(mspSerial);
   bme.begin(BMP_ADDRESS);  //Default Address 0x77
   pinMode(LED_BUILTIN, OUTPUT);
-#ifdef DEBUG
-  Serial.println("Starting!");
-#endif
-#ifdef LOG_GPS
+  logOnDebug("Starting!");
+#ifdef ESP8266
   if (SPIFFS.begin()) {
     fsInit = true;
-    logRemoveOldFiles(10);
+    readConfig();
   }else {
-#ifdef DEBUG
-    Serial.println("FS Init Fail!!");
-#endif
+    logOnDebug("FS Init Fail!!");
   }
+#endif
+#ifdef LOG_GPS
+  logRemoveOldFiles(10);
   pinMode(fileServerModePin, INPUT);
 #endif
 
@@ -208,9 +207,10 @@ void setup() {
   gpsSerial.begin(GPSBaud);
 #endif
 
-#ifdef USE_PWM_ARM
+if (USE_PWM_ARM) {
   pinMode(pwm_arm_pin, INPUT_PULLUP);
-#endif
+}
+
 
   delay(1000);
 
@@ -232,12 +232,12 @@ msp_osd_config_t msp_osd_config = { 0 };
 
 void send_osd_config() {
 
-#ifdef IMPERIAL_UNITS
-  msp_osd_config.units = 0;
-#else
-  msp_osd_config.units = 1;
-#endif
-
+  if (IMPERIAL_UNITS) {
+    msp_osd_config.units = 0;
+  } else {
+    msp_osd_config.units = 1;
+  }
+  
   msp_osd_config.osd_item_count = 56;
   msp_osd_config.osd_stat_count = 24;
   msp_osd_config.osd_timer_count = 2;
@@ -314,24 +314,23 @@ void invert_pos(uint16_t *pos1, uint16_t *pos2) {
 }
 
 void set_flight_mode_flags() {
-#ifdef USE_PWM_ARM
-  //USE PWM signal to ARM
-  volatile int pwmValue = readChannel(pwm_arm_pin, 1000, 2000, 0);
-  if ((flightModeFlags == 0x00000002) && pwmValue >= triggerValue) {
-    flightModeFlags = 0x00000003;  // armed to start recording
-  } else if ((flightModeFlags == 0x00000003) && pwmValue < triggerValue && general_counter % 3000 == 0) {
-    flightModeFlags = 0x00000002;  // disarm after 3 second delay
+  if (USE_PWM_ARM) {
+      //USE PWM signal to ARM
+    volatile int pwmValue = readChannel(pwm_arm_pin, 1000, 2000, 0);
+    if ((flightModeFlags == 0x00000002) && pwmValue >= triggerValue) {
+      flightModeFlags = 0x00000003;  // armed to start recording
+    } else if ((flightModeFlags == 0x00000003) && pwmValue < triggerValue && general_counter % 3000 == 0) {
+      flightModeFlags = 0x00000002;  // disarm after 3 second delay
+    }
+  } else {
+    //USE Altitude to Arm
+    // flightModeFlags = 0x00000003; //Uncomment this to automatically arm on start
+    if ((flightModeFlags == 0x00000002) && relative_alt > armAltitude) {  // if altitude is 1 meter or more then arm to record
+      flightModeFlags = 0x00000003;                                       // armed to start recording
+    }
   }
-#else
-  //USE Altitude to Arm
-  // flightModeFlags = 0x00000003; //Uncomment this to automatically arm on start
-  if ((flightModeFlags == 0x00000002) && relative_alt > armAltitude) {  // if altitude is 1 meter or more then arm to record
-    flightModeFlags = 0x00000003;                                       // armed to start recording
-  }
-#endif
 }
 
-#ifdef USE_PWM_ARM
 // Read the number of a specified channel and convert to the range provided.
 // If the channel is off, return the default value
 int readChannel(int channelInput, int minLimit, int maxLimit, int defaultValue) {
@@ -339,7 +338,6 @@ int readChannel(int channelInput, int minLimit, int maxLimit, int defaultValue) 
   if (ch < 100) return defaultValue;
   return map(ch, 1000, 2000, minLimit, maxLimit);
 }
-#endif
 
 void send_msp_to_airunit(uint8_t voltage) {
 
@@ -554,6 +552,10 @@ void loop() {
 //*** USED ONLY FOR DEBUG ***
 void debugPrint() {
   mspSerial.println("**********************************");
+  mspSerial.print("Craft Name: ");
+  mspSerial.println(String(craftname));
+  mspSerial.print("Imperial: ");
+  mspSerial.println(IMPERIAL_UNITS);
   mspSerial.print("Flight Mode: ");
   mspSerial.println(flightModeFlags);
   mspSerial.print("Voltage: ");
@@ -566,10 +568,10 @@ void debugPrint() {
   mspSerial.println(climb_rate);
   mspSerial.print("Sample Count / transmit: ");
   mspSerial.println(lastCount);
-#ifdef USE_PWM_ARM
-  mspSerial.print("PWM Value: ");
-  mspSerial.println(readChannel(pwm_arm_pin, 1000, 2000, 0));
-#endif
+  if (USE_PWM_ARM) {
+    mspSerial.print("PWM Value: ");
+    mspSerial.println(readChannel(pwm_arm_pin, 1000, 2000, 0));
+  }
 #ifdef USE_GPS
   mspSerial.print("Lat: ");
   mspSerial.println(gps_lat);
@@ -597,6 +599,11 @@ void debugPrint() {
 }
 #endif
 
+void logOnDebug(String inValue) {
+#ifdef DEBUG
+  mspSerial.println(inValue);
+#endif
+}
 
 #ifdef LOG_GPS
 //Only used with GPS Option
@@ -644,7 +651,9 @@ uint32_t logGetNextFileNum() {
   Dir dir = SPIFFS.openDir("/");
   File file = dir.openFile("r");
   while (dir.next()) {
-    maxNum++;
+    if (dir.fileName() != CONFIG) {
+      maxNum++;
+    }
   }
   return maxNum;
 }
@@ -656,15 +665,17 @@ void logRemoveOldFiles(uint32_t fileLimit) {
   }
   //If next file is 16, we need to remove 16-10=6 files to get the FS back to 9 files
   //The process for this will be removing files 1-6, Then renaming 7 -> 1, 8 -> 2,...,and 15->9, so 10 will be the next file created when the system is armed
-  int filesToRemove = nextFile-fileLimit; //16 - 10 = 6
+  int filesToRemove = nextFile - fileLimit; //16 - 10 = 6
+  logOnDebug("Files to Remove: " + String(filesToRemove));
   for (int i = 1; i < filesToRemove + 1; i++) {
+    logOnDebug("Delete: " + String("/") + String(i));
     SPIFFS.remove(String("/") + String(i));
   }
   int filesToRename = fileLimit;
-  for (int i = 1; i<filesToRename; i++) {
+  for (int i = 1; i < filesToRename; i++) {
     String newFile = String("/") + String(i);
     String oldFile = String("/") + String(i + filesToRemove);
-    SPIFFS.rename(oldFile,newFile);
+    SPIFFS.rename(oldFile, newFile);
   }
 }
 
@@ -707,10 +718,13 @@ void checkTurnOnFileServer() {
     fileServerOn = true;
     ap_ssid += "-" + String(ESP.getChipId(), HEX);
     WiFi.softAP(((const char *)ap_ssid.c_str()), ap_psk);
-    webserver.on("/", showFiles);             //Show all logged gps files
-    webserver.on("/download", downloadFile);  //Convert and download a gpx file
-    webserver.on("/delete", deleteFiles);     //Delete all files
-    webserver.on("/wifioff", turnWifiOff);    //Turn off AP Wifi
+    webserver.on("/", showFiles);                 //Show all logged gps files
+    webserver.on("/download", downloadFile);      //Convert and download a gpx file
+    webserver.on("/delete", deleteFiles);         //Delete all files
+    webserver.on("/wifioff", turnWifiOff);        //Turn off AP Wifi
+    webserver.on("/configure", handleConfigure);  //Show the Configure Page
+    webserver.on("/saveconfig", handleSaveConfig);//Show the Configure Page
+    webserver.on("/reset", handleSystemReset);    //Reset Device
     webserver.begin();
     digitalWrite(LED_BUILTIN, LOW);
   }
@@ -718,7 +732,10 @@ void checkTurnOnFileServer() {
 }
 
 void turnWifiOff() {
-  webserver.send(200, "text/html", "Wifi Turned Off. <a href='/'>Return to main screen</a> when reconnected.");
+  sendHeader();
+  webserver.sendContent("Wifi Turned Off. <a href='/'>Return to main screen</a> when reconnected.");
+  webserver.sendContent(getBodyEnd());
+  webserver.sendContent("");
   webserver.client().stop();
   fileServerOn = false;
   digitalWrite(LED_BUILTIN, HIGH);
@@ -732,25 +749,68 @@ void sendHeader() {
   webserver.sendHeader("Expires", "-1");
   webserver.setContentLength(CONTENT_LENGTH_UNKNOWN);
   webserver.send(200, "text/html", "");
+  webserver.sendContent(FPSTR(HEAD_TITLE));
+  webserver.sendContent(FPSTR(BODY_MENU));
+}
 
-  String html = "<!DOCTYPE HTML>";
-  html += "<html><head><title>QLiteOSD</title><link rel='icon' href='data:;base64,='>";
-  html += "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />";
-  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
-  html += "</head><body>";
-  webserver.sendContent(html);
+String getBodyEnd() {
+  String html = FPSTR(BODY_END);
+  html.replace("%VERSION%", String(VERSION));
+  return html;
 }
 
 void sendFooter() {
-  String html = "<br><br><br>";
-  html += "</body></html>";
-  webserver.sendContent(html);
+  webserver.sendContent(getBodyEnd());
   webserver.sendContent("");
   webserver.client().stop();
 }
 
 String getFileName() {
   return "QL-" + String(ESP.getChipId(), HEX) + "-";
+}
+
+void handleConfigure() {
+  sendHeader();
+
+  String form = FPSTR(CONFIG_FORM);
+  form.replace("%CRAFTNAME%", String(craftname));
+
+  String isImperialChecked = "";
+  if (IMPERIAL_UNITS) {
+    isImperialChecked = "checked='checked'";
+  }
+  form.replace("%USEIMPERIALCHECKED%", isImperialChecked);
+
+  String isUsePwmChecked = "";
+  if (USE_PWM_ARM) {
+    isUsePwmChecked = "checked='checked'";
+  }
+  form.replace("%USEPWMCHECKED%", isUsePwmChecked);
+
+  webserver.sendContent(form);
+
+  sendFooter();
+}
+
+void handleSaveConfig() {
+  String temp = webserver.arg("craftname_form");
+  temp.toCharArray(craftname, sizeof(temp));
+  IMPERIAL_UNITS = webserver.hasArg("use_imperial_form");
+  USE_PWM_ARM = webserver.hasArg("use_pwm_arm_form");
+
+  writeConfig();
+  redirectHome();
+}
+
+void redirectHome() {
+  // Send them back to the Root Directory
+  webserver.sendHeader("Location", String("/"), true);
+  webserver.sendHeader("Cache-Control", "no-cache, no-store");
+  webserver.sendHeader("Pragma", "no-cache");
+  webserver.sendHeader("Expires", "-1");
+  webserver.send(302, "text/plain", "");
+  webserver.client().stop();
+  delay(1000);
 }
 
 void showFiles() {
@@ -767,6 +827,9 @@ void showFiles() {
   Dir dir = SPIFFS.openDir("/");
   String lastFileNum = String("");
   while (dir.next()) {
+    if (dir.fileName() == CONFIG) {
+      continue;  // don't look at the config file
+    }
     String fileNum = dir.fileName();
     if (lastFileNum == fileNum) {
       break; //In the chance that there is a duplicate at the end, break
@@ -788,7 +851,6 @@ void showFiles() {
   webpage += "Space Used: <strong>" + fileSize(fsInfo.usedBytes) + "</strong> | ";
   webpage += "Free Space: <strong>" + fileSize(fsInfo.totalBytes) + "</strong>";
   webpage += "<br/><br/><a href='/delete' onclick='return confirm(\"Do you want to delete all files?\")'><strong>Delete All Files</strong></a>";
-  webpage += " | <a href='/wifioff' onclick='return confirm(\"Do you want to turn off Wifi Access Point and start OSD again?\")'><strong>Turn OFF Wifi</strong></a>";
   webpage += "<script>var times = document.getElementsByClassName('time'); for (var i = 0; i < times.length; i++) {times.item(i).innerHTML = new Date(times.item(i).innerHTML*1000).toLocaleString();}</script>";
 
   webserver.sendContent(webpage);
@@ -860,7 +922,7 @@ void downloadFile() {
 }
 
 void deleteFiles() {
-  SPIFFS.format();
+  logRemoveOldFiles(0);
   delay(1000);
   webserver.sendHeader("Location", String("/"), true);
   webserver.sendHeader("Cache-Control", "no-cache, no-store");
@@ -868,5 +930,60 @@ void deleteFiles() {
   webserver.sendHeader("Expires", "-1");
   webserver.send(302, "text/plain", "");
   webserver.client().stop();
+}
+#endif
+
+#ifdef ESP8266
+
+void handleSystemReset() {
+  logOnDebug("Reset System Configuration");
+  if (SPIFFS.format()) {
+    redirectHome();
+    ESP.restart();
+  }
+}
+
+
+void writeConfig() {
+  // Save settings to file for playback on power up.
+  File f = SPIFFS.open(CONFIG, "w");
+  if (!f) {
+    logOnDebug("File open failed!");
+  } else {
+    logOnDebug("Saving settings now...");
+    f.println("craftname=" + String(craftname));
+    f.println("IMPERIAL_UNITS=" + String(IMPERIAL_UNITS));
+    f.println("USE_PWM_ARM=" + String(USE_PWM_ARM));
+  }
+  f.close();
+  readConfig();
+}
+
+void readConfig() {
+  if (SPIFFS.exists(CONFIG) == false) {
+    logOnDebug("Settings File does not yet exists.");
+    writeConfig();
+    return;
+  }
+  File fr = SPIFFS.open(CONFIG, "r");
+  String line;
+  while (fr.available()) {
+    line = fr.readStringUntil('\n');
+    if (line.indexOf("craftname=") >= 0) {
+      String temp = line.substring(line.lastIndexOf("craftname=") + 10);
+      temp.trim();
+      temp.toCharArray(craftname, sizeof(temp));
+      logOnDebug("craftname: " + String(craftname));
+    }
+    if (line.indexOf("IMPERIAL_UNITS=") >= 0) {
+      IMPERIAL_UNITS = line.substring(line.lastIndexOf("IMPERIAL_UNITS=") + 15).toInt();
+      logOnDebug("IMPERIAL_UNITS: " + String(IMPERIAL_UNITS));
+    }
+    if (line.indexOf("USE_PWM_ARM=") >= 0) {
+      USE_PWM_ARM = line.substring(line.lastIndexOf("USE_PWM_ARM=") + 12).toInt();
+      logOnDebug("USE_PWM_ARM: " + String(USE_PWM_ARM));
+    }
+  }
+  fr.close();
 }
 #endif
