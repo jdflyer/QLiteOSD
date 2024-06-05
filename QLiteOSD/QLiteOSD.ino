@@ -500,7 +500,7 @@ void readGPS() {
 #endif
 
 void loop() {
-#ifdef LOG_GPS
+#ifdef ESP8266
   if (fileServerOn) {
     digitalWrite(LED_BUILTIN, LOW);
     webserver.handleClient();
@@ -723,7 +723,9 @@ void checkTurnOnFileServer() {
     webserver.on("/delete", deleteFiles);         //Delete all files
     webserver.on("/wifioff", turnWifiOff);        //Turn off AP Wifi
     webserver.on("/configure", handleConfigure);  //Show the Configure Page
-    webserver.on("/saveconfig", handleSaveConfig);//Show the Configure Page
+    webserver.on("/saveconfig", handleSaveConfig);//Save the Configure Page
+    webserver.on("/osd", handleOSD);  //Show the Configure Page
+    webserver.on("/saveosd", handleSaveOSD);//Save the Configure Page
     webserver.on("/reset", handleSystemReset);    //Reset Device
     webserver.begin();
     digitalWrite(LED_BUILTIN, LOW);
@@ -797,6 +799,55 @@ void handleSaveConfig() {
   temp.toCharArray(craftname, sizeof(temp));
   IMPERIAL_UNITS = webserver.hasArg("use_imperial_form");
   USE_PWM_ARM = webserver.hasArg("use_pwm_arm_form");
+
+  writeConfig();
+  redirectHome();
+}
+
+void handleOSD() {
+  webserver.sendHeader("Cache-Control", "no-cache, no-store");
+  webserver.sendHeader("Pragma", "no-cache");
+  webserver.sendHeader("Expires", "-1");
+  webserver.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  webserver.send(200, "text/html", "");
+  webserver.sendContent(FPSTR(HEAD_TITLE));
+  webserver.sendContent(FPSTR(OSD_JS));
+  webserver.sendContent(FPSTR(BODY_MENU));
+
+  String form = FPSTR(OSD_DISPLAY);
+
+  form.replace("%ALT_VAL%", String(osd_altitude_pos));
+  form.replace("%CELL_VAL%", String(osd_avg_cell_voltage_pos));
+  form.replace("%BAT_VAL%", String(osd_main_batt_voltage_pos));
+  form.replace("%CRAFT_VAL%", String(osd_craft_name_pos));
+  form.replace("%SATS_VAL%", String(blink_sats_orig_pos));
+  form.replace("%HOMEARROW_VAL%", String(osd_home_dir_pos));
+  form.replace("%DIST_VAL%", String(osd_home_dist_pos));
+  form.replace("%SPEED_VAL%", String(osd_gps_speed_pos));
+  form.replace("%LAT_VAL%", String(osd_gps_lat_pos));
+  form.replace("%LON_VAL%", String(osd_gps_lon_pos));
+  form.replace("%CROSS_VAL%", String(osd_crosshairs_pos));
+
+  webserver.sendContent(form);
+
+  sendFooter();
+}
+
+void handleSaveOSD() {
+
+  osd_altitude_pos = strtol(webserver.arg("altitude_pos").c_str(), NULL, 0);
+  osd_avg_cell_voltage_pos = strtol(webserver.arg("cell_voltage_pos").c_str(), NULL, 0);
+  osd_main_batt_voltage_pos = strtol(webserver.arg("main_batt_voltage_pos").c_str(), NULL, 0);
+  osd_craft_name_pos = strtol(webserver.arg("craft_name_pos").c_str(), NULL, 0);
+  osd_gps_sats_pos = strtol(webserver.arg("gps_sats_pos").c_str(), NULL, 0);
+  osd_home_dir_pos = strtol(webserver.arg("home_dir_pos").c_str(), NULL, 0);
+  osd_home_dist_pos = strtol(webserver.arg("home_dist_pos").c_str(), NULL, 0);
+  osd_gps_speed_pos = strtol(webserver.arg("gps_speed_pos").c_str(), NULL, 0);
+  osd_gps_lat_pos = strtol(webserver.arg("gps_lat_pos").c_str(), NULL, 0);
+  osd_gps_lon_pos = strtol(webserver.arg("gps_lon_pos").c_str(), NULL, 0);
+  osd_crosshairs_pos = strtol(webserver.arg("crosshairs_pos").c_str(), NULL, 0);
+
+  blink_sats_orig_pos = osd_gps_sats_pos; // update the origin position for sats osd item
 
   writeConfig();
   redirectHome();
@@ -948,12 +999,23 @@ void writeConfig() {
   // Save settings to file for playback on power up.
   File f = SPIFFS.open(CONFIG, "w");
   if (!f) {
-    logOnDebug("File open failed!");
+    logOnDebug(String(CONFIG) + " file failed to open!");
   } else {
     logOnDebug("Saving settings now...");
     f.println("craftname=" + String(craftname));
     f.println("IMPERIAL_UNITS=" + String(IMPERIAL_UNITS));
     f.println("USE_PWM_ARM=" + String(USE_PWM_ARM));
+    f.println("osd_altitude_pos=" + String(osd_altitude_pos));
+    f.println("osd_avg_cell_voltage_pos=" + String(osd_avg_cell_voltage_pos));
+    f.println("osd_main_batt_voltage_pos=" + String(osd_main_batt_voltage_pos));
+    f.println("osd_craft_name_pos=" + String(osd_craft_name_pos));
+    f.println("osd_gps_sats_pos=" + String(blink_sats_orig_pos));
+    f.println("osd_home_dir_pos=" + String(osd_home_dir_pos));
+    f.println("osd_home_dist_pos=" + String(osd_home_dist_pos));
+    f.println("osd_gps_speed_pos=" + String(osd_gps_speed_pos));
+    f.println("osd_gps_lat_pos=" + String(osd_gps_lat_pos));
+    f.println("osd_gps_lon_pos=" + String(osd_gps_lon_pos));
+    f.println("osd_crosshairs_pos=" + String(osd_crosshairs_pos));
   }
   f.close();
   readConfig();
@@ -983,6 +1045,54 @@ void readConfig() {
       USE_PWM_ARM = line.substring(line.lastIndexOf("USE_PWM_ARM=") + 12).toInt();
       logOnDebug("USE_PWM_ARM: " + String(USE_PWM_ARM));
     }
+    //OSD Items
+    if (line.indexOf("osd_altitude_pos=") >= 0) {
+      osd_altitude_pos = line.substring(line.lastIndexOf("osd_altitude_pos=") + 17).toInt();
+      logOnDebug("osd_altitude_pos: " + String(osd_altitude_pos));
+    }
+    if (line.indexOf("osd_avg_cell_voltage_pos=") >= 0) {
+      osd_avg_cell_voltage_pos = line.substring(line.lastIndexOf("osd_avg_cell_voltage_pos=") + 25).toInt();
+      logOnDebug("osd_avg_cell_voltage_pos: " + String(osd_avg_cell_voltage_pos));
+    }
+    if (line.indexOf("osd_main_batt_voltage_pos=") >= 0) {
+      osd_main_batt_voltage_pos = line.substring(line.lastIndexOf("osd_main_batt_voltage_pos=") + 26).toInt();
+      logOnDebug("osd_main_batt_voltage_pos: " + String(osd_main_batt_voltage_pos));
+    }
+    if (line.indexOf("osd_craft_name_pos=") >= 0) {
+      osd_craft_name_pos = line.substring(line.lastIndexOf("osd_craft_name_pos=") + 19).toInt();
+      logOnDebug("osd_craft_name_pos: " + String(osd_craft_name_pos));
+    }
+    if (line.indexOf("osd_gps_sats_pos=") >= 0) {
+      osd_gps_sats_pos = line.substring(line.lastIndexOf("osd_gps_sats_pos=") + 17).toInt();
+      logOnDebug("osd_gps_sats_pos: " + String(osd_gps_sats_pos));
+    }
+    if (line.indexOf("osd_home_dir_pos=") >= 0) {
+      osd_home_dir_pos = line.substring(line.lastIndexOf("osd_home_dir_pos=") + 17).toInt();
+      logOnDebug("osd_home_dir_pos: " + String(osd_home_dir_pos));
+    }
+    if (line.indexOf("osd_home_dist_pos=") >= 0) {
+      osd_home_dist_pos = line.substring(line.lastIndexOf("osd_home_dist_pos=") + 18).toInt();
+      logOnDebug("osd_home_dist_pos: " + String(osd_home_dist_pos));
+    }
+    if (line.indexOf("osd_gps_speed_pos=") >= 0) {
+      osd_gps_speed_pos = line.substring(line.lastIndexOf("osd_gps_speed_pos=") + 18).toInt();
+      logOnDebug("osd_gps_speed_pos: " + String(osd_gps_speed_pos));
+    }
+    if (line.indexOf("osd_gps_lat_pos=") >= 0) {
+      osd_gps_lat_pos = line.substring(line.lastIndexOf("osd_gps_lat_pos=") + 16).toInt();
+      logOnDebug("osd_gps_lat_pos: " + String(osd_gps_lat_pos));
+    }
+    if (line.indexOf("osd_gps_lon_pos=") >= 0) {
+      osd_gps_lon_pos = line.substring(line.lastIndexOf("osd_gps_lon_pos=") + 16).toInt();
+      logOnDebug("osd_gps_lon_pos: " + String(osd_gps_lon_pos));
+    }
+    if (line.indexOf("osd_crosshairs_pos=") >= 0) {
+      osd_crosshairs_pos = line.substring(line.lastIndexOf("osd_crosshairs_pos=") + 19).toInt();
+      logOnDebug("osd_crosshairs_pos: " + String(osd_crosshairs_pos));
+    }
+
+    blink_sats_orig_pos = osd_gps_sats_pos; // set original position to the new position
+
   }
   fr.close();
 }

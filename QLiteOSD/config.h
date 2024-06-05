@@ -37,4 +37,20 @@
 char craftname[15] = "QLiteOSD"; // Do not make larger than 14 characters
 boolean IMPERIAL_UNITS = true;  // Set to false to see units in Metric
 boolean USE_PWM_ARM = false;  // pin D5 ESP8266 -- If commented out arming will occure with altitude change
+
+//OSD Elements suppported by DJI
+uint16_t osd_altitude_pos = 2240;
+uint16_t osd_avg_cell_voltage_pos = 2145;
+uint16_t osd_main_batt_voltage_pos = 2113;
+uint16_t osd_crosshairs_pos = 2254;
+uint16_t osd_craft_name_pos = 2048;
+
+// GPS related -- change each to 234 to hide
+uint16_t osd_gps_sats_pos = 2074;
+uint16_t osd_home_dir_pos = 2095;
+uint16_t osd_home_dist_pos = 2337;
+uint16_t osd_gps_speed_pos = 2305;
+uint16_t osd_gps_lat_pos = 2432;
+uint16_t osd_gps_lon_pos = 2464;
+
  

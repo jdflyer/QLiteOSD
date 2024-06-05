@@ -5,29 +5,11 @@
 #include <stdint.h>
 
 //currently working elements
-const uint16_t osd_altitude_pos = 2240;
-const uint16_t osd_numerical_vario_pos = 2273;
-const uint16_t osd_avg_cell_voltage_pos = 2145;
-const uint16_t osd_main_batt_voltage_pos = 2113;
-const uint16_t osd_crosshairs_pos = 2254;
-const uint16_t osd_craft_name_pos = 2048;
+// moved to config.h to be used in web interface
 
-#ifdef USE_GPS
-uint16_t osd_gps_sats_pos = 2074;
-const uint16_t osd_home_dir_pos = 2095;
-const uint16_t osd_home_dist_pos = 2337;
-const uint16_t osd_gps_speed_pos = 2305;
-const uint16_t osd_gps_lat_pos = 2432;
-const uint16_t osd_gps_lon_pos = 2464;
-#else
-uint16_t osd_gps_sats_pos = 234;
-const uint16_t osd_home_dir_pos = 234;
-const uint16_t osd_home_dist_pos = 234;
-const uint16_t osd_gps_speed_pos = 234;
-const uint16_t osd_gps_lat_pos = 234;
-const uint16_t osd_gps_lon_pos = 234;
-#endif
+const uint16_t osd_numerical_vario_pos = 234;
 
+// Others
 const uint16_t osd_pitch_angle_pos = 234;
 const uint16_t osd_roll_angle_pos = 234;
 const uint16_t osd_rssi_value_pos = 234;
