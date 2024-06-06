@@ -53,4 +53,9 @@ uint16_t osd_gps_speed_pos = 2305;
 uint16_t osd_gps_lat_pos = 2432;
 uint16_t osd_gps_lon_pos = 2464;
 
+//RGB LED Colors
+String rgb_mode = "ON"; // OFF, ON, BATTERY, ALTITUDE, STROBE
+int redColor = 0;       // 0 - 255
+int greenColor = 255;   // 0 - 255
+int blueColor = 0;      // 0 - 255
  

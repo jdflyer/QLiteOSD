@@ -48,14 +48,18 @@
 #define CONFIG "/conf.txt"
 
 #ifdef USE_GPS
+#include <Adafruit_NeoPixel.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
 #ifdef ESP8266
 static const int gps_RX_pin = D8, gps_TX_pin = D7;  // these were swapped in 1.2 to match board
+static const int led_pin = D6;
 #else
 static const int gps_RX_pin = 4, gps_TX_pin = 3;
+static const int led_pin = 11;
 #endif
+static const int NUM_LEDS = 12;
 static const uint32_t GPSBaud = 9600;
 
 #ifdef LOG_GPS
@@ -100,6 +104,7 @@ static const int pwm_arm_pin = 10; // pro mini arduino
 #endif
 static int triggerValue = 1700;
 
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, led_pin, NEO_GRB + NEO_KHZ800);
 
 HardwareSerial &mspSerial = Serial;
 MSP msp;
@@ -189,6 +194,8 @@ void setup() {
   msp.begin(mspSerial);
   bme.begin(BMP_ADDRESS);  //Default Address 0x77
   pinMode(LED_BUILTIN, OUTPUT);
+  pixels.begin();
+  pixels.show(); // Initialize all pixels to 'off'
   logOnDebug("Starting!");
 #ifdef ESP8266
   if (SPIFFS.begin()) {
@@ -500,6 +507,7 @@ void readGPS() {
 #endif
 
 void loop() {
+    handleRGBled();
 #ifdef ESP8266
   if (fileServerOn) {
     digitalWrite(LED_BUILTIN, LOW);
@@ -545,6 +553,53 @@ void loop() {
 #endif
     general_counter += next_interval_MSP;
   }
+}
+
+void handleRGBled() {
+  if (rgb_mode == "OFF") {
+    return;
+  }
+  if (fileServerOn) {
+    pixels.fill(pixels.Color(0, 0, 155), 0, NUM_LEDS);
+    pixels.show();
+    return;
+  }
+  if (rgb_mode == "ON") {
+    pixels.fill(pixels.Color(redColor, greenColor, blueColor), 0, NUM_LEDS);
+    pixels.show();
+    return;
+  }
+  if (rgb_mode == "BATTERY") {
+    int red = 125;
+    int green = 125;
+    int blue = 0;
+    int add = 0;
+    int sub = 0;
+    
+
+    //add = map(vbat, 109, )
+    return;
+  }
+  if (rgb_mode == "ALTITUDE") {
+    int red = 125;
+    int green = 125;
+    int blue = 0;
+    int add = 0;
+    int sub = 0;
+    
+
+    //add = map(vbat, 109, )
+    return;
+  }
+  if (rgb_mode == "STROBE") {
+    if (!lightOn) {
+      pixels.fill(pixels.Color(redColor, greenColor, blueColor), 0, NUM_LEDS);
+    } else {
+      pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
+    }
+    pixels.show();
+  }
+
 }
 
 
@@ -788,9 +843,17 @@ void handleConfigure() {
     isUsePwmChecked = "checked='checked'";
   }
   form.replace("%USEPWMCHECKED%", isUsePwmChecked);
+  
+  String rgbOptions = FPSTR(RGB_OPTIONS);
+  rgbOptions.replace(">" + String(rgb_mode) + "<", " selected>" + String(rgb_mode) + "<");
+  form.replace("%RGB_OPTIONS%", rgbOptions);
 
+  form.replace("%RED%", String(redColor));
+  form.replace("%GREEN%", String(greenColor));
+  form.replace("%BLUE%", String(blueColor));
+  
   webserver.sendContent(form);
-
+  webserver.sendContent(FPSTR(RGB_JS));
   sendFooter();
 }
 
@@ -799,6 +862,10 @@ void handleSaveConfig() {
   temp.toCharArray(craftname, sizeof(temp));
   IMPERIAL_UNITS = webserver.hasArg("use_imperial_form");
   USE_PWM_ARM = webserver.hasArg("use_pwm_arm_form");
+  rgb_mode = webserver.arg("rgbmode");
+  redColor = webserver.arg("red").toInt();
+  greenColor = webserver.arg("green").toInt();
+  blueColor = webserver.arg("blue").toInt();
 
   writeConfig();
   redirectHome();
@@ -1016,6 +1083,10 @@ void writeConfig() {
     f.println("osd_gps_lat_pos=" + String(osd_gps_lat_pos));
     f.println("osd_gps_lon_pos=" + String(osd_gps_lon_pos));
     f.println("osd_crosshairs_pos=" + String(osd_crosshairs_pos));
+    f.println("rgb_mode=" + rgb_mode);
+    f.println("redColor=" + String(redColor));
+    f.println("greenColor=" + String(greenColor));
+    f.println("blueColor=" + String(blueColor));
   }
   f.close();
   readConfig();
@@ -1089,6 +1160,23 @@ void readConfig() {
     if (line.indexOf("osd_crosshairs_pos=") >= 0) {
       osd_crosshairs_pos = line.substring(line.lastIndexOf("osd_crosshairs_pos=") + 19).toInt();
       logOnDebug("osd_crosshairs_pos: " + String(osd_crosshairs_pos));
+    }
+    if (line.indexOf("rgb_mode=") >= 0) {
+      rgb_mode = line.substring(line.lastIndexOf("rgb_mode=") + 9);
+      rgb_mode.trim();
+      logOnDebug("rgb_mode: " + rgb_mode);
+    }
+    if (line.indexOf("redColor=") >= 0) {
+      redColor = line.substring(line.lastIndexOf("redColor=") + 9).toInt();
+      logOnDebug("redColor: " + String(redColor));
+    }
+    if (line.indexOf("greenColor=") >= 0) {
+      greenColor = line.substring(line.lastIndexOf("greenColor=") + 11).toInt();
+      logOnDebug("greenColor: " + String(greenColor));
+    }
+    if (line.indexOf("blueColor=") >= 0) {
+      blueColor = line.substring(line.lastIndexOf("blueColor=") + 10).toInt();
+      logOnDebug("blueColor: " + String(blueColor));
     }
 
     blink_sats_orig_pos = osd_gps_sats_pos; // set original position to the new position
