@@ -598,6 +598,7 @@ void handleRGBled() {
       pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
     }
     pixels.show();
+    return;
   }
 
 }
