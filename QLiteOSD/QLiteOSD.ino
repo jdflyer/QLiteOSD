@@ -427,7 +427,7 @@ uint8_t getCellCount(uint8_t voltage) {
   uint8_t batteryCellCount = 0;
   if (voltage < 43 && voltage > 0) batteryCellCount = 1;
   else if (voltage < 85) batteryCellCount = 2;
-  else if (voltage < 127) batteryCellCount = 3;
+  else if (voltage < 128) batteryCellCount = 3;
   else if (voltage < 169) batteryCellCount = 4;
   else if (voltage < 211) batteryCellCount = 5;
   else if (voltage < 255) batteryCellCount = 6;
@@ -570,25 +570,44 @@ void handleRGBled() {
     return;
   }
   if (rgb_mode == "BATTERY") {
-    int red = 125;
-    int green = 125;
-    int blue = 0;
-    int add = 0;
-    int sub = 0;
-    
+    int cellVoltage = (int)((vbat / getCellCount(vbat)));
+    int greenValue = map(cellVoltage, 36, 42, 0, 255); // Green decreases as voltage decreases
+    int redValue = map(cellVoltage, 36, 42, 255, 0);   // Red increases as voltage decreases
 
-    //add = map(vbat, 109, )
+    if (cellVoltage >= 42) {
+      greenValue = 255;
+      redValue = 0;
+    } else if (cellVoltage <= 36) {
+      greenValue = 0;
+      redValue = 255;
+    }
+
+    if (lightOn && cellVoltage <= 36) {
+      pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
+    } else {
+      pixels.fill(pixels.Color(redValue, greenValue, 0), 0, NUM_LEDS);
+    }
+    pixels.show();
     return;
   }
   if (rgb_mode == "ALTITUDE") {
-    int red = 125;
-    int green = 125;
-    int blue = 0;
-    int add = 0;
-    int sub = 0;
-    
+    int greenValue = map(relative_alt, 0, 12192, 255, 0); // Green decreases as voltage decreases
+    int redValue = map(relative_alt, 0, 12192, 0, 255);   // Red increases as voltage decreases
 
-    //add = map(vbat, 109, )
+    if (relative_alt >= 12192) {
+      greenValue = 0;
+      redValue = 255;
+    } else if (relative_alt <= 0) {
+      greenValue = 255;
+      redValue = 0;
+    }
+  
+    if (lightOn && relative_alt >= 12192) {
+      pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
+    } else {
+      pixels.fill(pixels.Color(redValue, greenValue, 0), 0, NUM_LEDS);
+    }
+    pixels.show();
     return;
   }
   if (rgb_mode == "STROBE") {
