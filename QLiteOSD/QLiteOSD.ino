@@ -556,6 +556,8 @@ void loop() {
 
 void handleRGBled() {
   if (rgb_mode == "OFF") {
+    pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
+    pixels.show();
     return;
   }
   if (fileServerOn) {
