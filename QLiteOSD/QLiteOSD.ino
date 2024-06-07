@@ -59,7 +59,6 @@ static const int led_pin = D6;
 static const int gps_RX_pin = 4, gps_TX_pin = 3;
 static const int led_pin = 11;
 #endif
-static const int NUM_LEDS = 12;
 static const uint32_t GPSBaud = 9600;
 
 #ifdef LOG_GPS
