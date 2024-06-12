@@ -54,9 +54,16 @@ uint16_t osd_gps_lat_pos = 2432;
 uint16_t osd_gps_lon_pos = 2464;
 
 //RGB LED Colors
-static const int NUM_LEDS = 24;
-String rgb_mode = "ON"; // OFF, ON, BATTERY, ALTITUDE, STROBE
+static const int NUM_LEDS = 12;
+String rgb_mode = "ON"; // OFF, ON
 int redColor = 0;       // 0 - 255
 int greenColor = 255;   // 0 - 255
 int blueColor = 0;      // 0 - 255
+
+//Voltage on Board VCC
+#ifdef ESP8266
+float arduinoVCC = 3.25;  //Measured ESP8266 3.3 pin voltage
+#else
+float arduinoVCC = 4.95;  //Measured Arduino 5V pin voltage
+#endif
  

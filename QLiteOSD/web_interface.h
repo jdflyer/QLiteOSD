@@ -193,7 +193,11 @@ static const char CONFIG_FORM[] PROGMEM = "<h2>Configuration:</h2><form action='
                           "<p><label>Craft Name</label><input type='text' name='craftname_form' value='%CRAFTNAME%' maxlength='14'></p>"
                           "<p><input name='use_imperial_form' type='checkbox' %USEIMPERIALCHECKED%> Use Imperial Units</p>"
                           "<p><input name='use_pwm_arm_form' type='checkbox' %USEPWMCHECKED%> Arm with PWM Switch (D5 pin)</p>"
-                          "<p><label for='toggle-select'>Select LED function:</label>"
+                          "<p><label for='voltage'>Adjust Voltage: </label>"
+			                    "<input type='text' name='voltage' id='voltage' readonly></p>"
+                          "<p><label for='numericInput'>Board VCC (3.00V to 6.00V): </label>"
+                          "<input type='number' id='numericInput' value='%VCC%' name='numericInput' min='3.00' max='6.00' step='0.01' required></p>"
+                          "<p><label for='toggle-select'>Select LED mode:</label>"
                           "<select id='toggle-select' name='rgbmode'>"
                           "%RGB_OPTIONS%"
                           "</select> (D6 pin)</p>"
@@ -218,10 +222,7 @@ static const char CONFIG_FORM[] PROGMEM = "<h2>Configuration:</h2><form action='
                           "<button type='submit'>Save</button></form>";
 
 static const char RGB_OPTIONS[] PROGMEM = "<option value='OFF'>OFF</option>"
-                          "    <option value='ON'>ON</option>"
-                          "    <option value='BATTERY'>BATTERY</option>"
-                          "    <option value='ALTITUDE'>ALTITUDE</option>"
-                          "    <option value='STROBE'>STROBE</option>";
+                          "    <option value='ON'>ON</option>";
 
 static const char RGB_JS[] PROGMEM = "	<script>"
                                     "		const redSlider = document.getElementById('red');"
@@ -260,6 +261,19 @@ static const char RGB_JS[] PROGMEM = "	<script>"
                                     "     displaySection.style.display = 'none';"
                                     "   }"
                                     "	</script>";      
+
+static const char VOLT_JS[] PROGMEM = "<script>"
+                                      "		document.getElementById('numericInput').addEventListener('input', calculateVoltage);"
+                                      "		function calculateVoltage() {"
+                                      "			const R1 = %R1%;"
+                                      "			const R2 = %R2%;"
+                                      "			const readValue = %READVALUE%;"
+                                      "			const arduinoVCC = parseFloat(document.getElementById('numericInput').value);"
+                                      "			var vbat = (readValue * (arduinoVCC / 1024.0)) * (1 + (R2 / R1));"
+                                      "			document.getElementById('voltage').value = vbat.toFixed(2);"
+                                      "		}"
+                                      "		calculateVoltage();"
+                                      "</script>";
 
 static const char OSD_JS[] PROGMEM =    "<script>function handleCellClick(e){let t=document.querySelector('input[name=\"item\"]:checked');"
                                         "if(t){let l=t.getAttribute('data-item-number'),r=t.id,a=e.target.getAttribute('data-value');if(11>=e.target.textContent.trim()){alert('This cell is already occupied. Please choose another cell.');"

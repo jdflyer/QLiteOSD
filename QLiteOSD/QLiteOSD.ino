@@ -119,12 +119,7 @@ static const uint8_t armAltitude = 150;  // Centimeters high at witch arm signal
 int16_t lastAltRead = 0;                 //cm
 boolean lightOn = true;
 
-//Voltage and Battery Reading
-#ifdef ESP8266
-const float arduinoVCC = 3.25;  //Measured ESP8266 3.3 pin voltage
-#else
-const float arduinoVCC = 4.95;  //Measured Arduino 5V pin voltage
-#endif
+//Resisters for Battery Reading
 float ValueR1 = 7500.0;   //7.5K Resistor
 float ValueR2 = 30000.0;  //30K Resistor
 const int alanogPin = A0;
@@ -193,9 +188,9 @@ void setup() {
   msp.begin(mspSerial);
   bme.begin(BMP_ADDRESS);  //Default Address 0x77
   pinMode(LED_BUILTIN, OUTPUT);
-  pixels.begin();
-  pixels.show(); // Initialize all pixels to 'off'
+  
   logOnDebug("Starting!");
+
 #ifdef ESP8266
   if (SPIFFS.begin()) {
     fsInit = true;
@@ -204,6 +199,10 @@ void setup() {
     logOnDebug("FS Init Fail!!");
   }
 #endif
+
+  pixels.begin();
+  handleRGBled();
+
 #ifdef LOG_GPS
   logRemoveOldFiles(10);
   pinMode(fileServerModePin, INPUT);
@@ -426,7 +425,7 @@ uint8_t getCellCount(uint8_t voltage) {
   uint8_t batteryCellCount = 0;
   if (voltage < 43 && voltage > 0) batteryCellCount = 1;
   else if (voltage < 85) batteryCellCount = 2;
-  else if (voltage < 128) batteryCellCount = 3;
+  else if (voltage < 127) batteryCellCount = 3;
   else if (voltage < 169) batteryCellCount = 4;
   else if (voltage < 211) batteryCellCount = 5;
   else if (voltage < 255) batteryCellCount = 6;
@@ -506,7 +505,6 @@ void readGPS() {
 #endif
 
 void loop() {
-    handleRGBled();
 #ifdef ESP8266
   if (fileServerOn) {
     digitalWrite(LED_BUILTIN, LOW);
@@ -553,6 +551,7 @@ void loop() {
     general_counter += next_interval_MSP;
   }
 }
+
 
 void handleRGBled() {
   if (rgb_mode == "OFF") {
@@ -864,6 +863,7 @@ void handleConfigure() {
     isUsePwmChecked = "checked='checked'";
   }
   form.replace("%USEPWMCHECKED%", isUsePwmChecked);
+  form.replace("%VCC%", String(arduinoVCC));
   
   String rgbOptions = FPSTR(RGB_OPTIONS);
   rgbOptions.replace(">" + String(rgb_mode) + "<", " selected>" + String(rgb_mode) + "<");
@@ -875,6 +875,11 @@ void handleConfigure() {
   
   webserver.sendContent(form);
   webserver.sendContent(FPSTR(RGB_JS));
+  form = FPSTR(VOLT_JS);
+  form.replace("%R1%", String(ValueR1));
+  form.replace("%R2%", String(ValueR2));
+  form.replace("%READVALUE%", String(analogRead(alanogPin)));
+  webserver.sendContent(form);
   sendFooter();
 }
 
@@ -887,6 +892,7 @@ void handleSaveConfig() {
   redColor = webserver.arg("red").toInt();
   greenColor = webserver.arg("green").toInt();
   blueColor = webserver.arg("blue").toInt();
+  arduinoVCC = webserver.arg("numericInput").toFloat();
 
   writeConfig();
   redirectHome();
@@ -1108,6 +1114,7 @@ void writeConfig() {
     f.println("redColor=" + String(redColor));
     f.println("greenColor=" + String(greenColor));
     f.println("blueColor=" + String(blueColor));
+    f.println("arduinoVCC=" + String(arduinoVCC));
   }
   f.close();
   readConfig();
@@ -1198,6 +1205,10 @@ void readConfig() {
     if (line.indexOf("blueColor=") >= 0) {
       blueColor = line.substring(line.lastIndexOf("blueColor=") + 10).toInt();
       logOnDebug("blueColor: " + String(blueColor));
+    }
+    if (line.indexOf("arduinoVCC=") >= 0) {
+      arduinoVCC = line.substring(line.lastIndexOf("arduinoVCC=") + 11).toFloat();
+      logOnDebug("arduinoVCC: " + String(arduinoVCC));
     }
 
     blink_sats_orig_pos = osd_gps_sats_pos; // set original position to the new position
