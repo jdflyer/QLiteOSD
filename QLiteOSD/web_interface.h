@@ -8,9 +8,6 @@
  *
  * Copyright (C) 2023 David Payne
  * 
- * This software is based on and uses software published by Paul Kurucz (pkuruz):opentelem_to_bst_bridge
- * as well as software d3ngit : djihdfpv_mavlink_to_msp_V2 and crashsalot : VOT_to_DJIFPV
- * 
  * License info: See the LICENSE file at the repo top level
  *
  * THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTIES,
