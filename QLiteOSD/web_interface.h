@@ -219,7 +219,10 @@ static const char CONFIG_FORM[] PROGMEM = "<h2>Configuration:</h2><form action='
                           "<button type='submit'>Save</button></form>";
 
 static const char RGB_OPTIONS[] PROGMEM = "<option value='OFF'>OFF</option>"
-                          "    <option value='ON'>ON</option>";
+                          "    <option value='ON'>ON</option>"
+                          "    <option value='STROBE'>STROBE</option>"
+                          "    <option value='ALTITUDE'>ALTITUDE</option>"
+                          "    <option value='BATTERY'>BATTERY</option>";
 
 static const char RGB_JS[] PROGMEM = "	<script>"
                                     "		const redSlider = document.getElementById('red');"

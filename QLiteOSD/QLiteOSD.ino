@@ -118,6 +118,7 @@ float altSamples = 0.0;
 static const uint8_t armAltitude = 150;  // Centimeters high at witch arm signal is sent to DJI goggles
 int16_t lastAltRead = 0;                 //cm
 boolean lightOn = true;
+boolean flashOn = true;
 
 //Resisters for Battery Reading
 float ValueR1 = 7500.0;   //7.5K Resistor
@@ -130,6 +131,7 @@ boolean activityDetected = false;
 //Other
 const char fcVariant[5] = "BTFL";
 uint32_t previousMillis_MSP = 0;
+uint32_t previousMillis_LED = 0;
 const uint32_t next_interval_MSP = 100;
 uint32_t custom_mode = 0;  //flight mode
 uint8_t vbat = 0;
@@ -505,6 +507,12 @@ void readGPS() {
 #endif
 
 void loop() {
+  uint32_t currentMillis_MSP = millis();
+  if ((rgb_mode != "OFF" && rgb_mode != "ON") && (uint32_t)(currentMillis_MSP - previousMillis_LED) >= (next_interval_MSP * 10)) {
+    previousMillis_LED = currentMillis_MSP;
+    handleRGBled(); // only go here if LED can change during flight
+  }
+
 #ifdef ESP8266
   if (fileServerOn) {
     digitalWrite(LED_BUILTIN, LOW);
@@ -512,8 +520,6 @@ void loop() {
     return;
   }
 #endif
-  
-  uint32_t currentMillis_MSP = millis();
 
   readAltitude();
   readVoltage();
@@ -569,6 +575,7 @@ void handleRGBled() {
     pixels.show();
     return;
   }
+  flashOn = !flashOn;
   if (rgb_mode == "BATTERY") {
     int cellVoltage = (int)((vbat / getCellCount(vbat)));
     int greenValue = map(cellVoltage, 36, 42, 0, 255); // Green decreases as voltage decreases
@@ -582,7 +589,7 @@ void handleRGBled() {
       redValue = 255;
     }
 
-    if (lightOn && cellVoltage <= 36) {
+    if (flashOn && cellVoltage <= 36) {
       pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
     } else {
       pixels.fill(pixels.Color(redValue, greenValue, 0), 0, NUM_LEDS);
@@ -602,7 +609,7 @@ void handleRGBled() {
       redValue = 0;
     }
   
-    if (lightOn && relative_alt >= 12192) {
+    if (flashOn && relative_alt >= 12192) {
       pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
     } else {
       pixels.fill(pixels.Color(redValue, greenValue, 0), 0, NUM_LEDS);
@@ -611,7 +618,7 @@ void handleRGBled() {
     return;
   }
   if (rgb_mode == "STROBE") {
-    if (!lightOn) {
+    if (flashOn) {
       pixels.fill(pixels.Color(redColor, greenColor, blueColor), 0, NUM_LEDS);
     } else {
       pixels.fill(pixels.Color(0, 0, 0), 0, NUM_LEDS);
