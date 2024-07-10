@@ -53,7 +53,7 @@
 #include <SoftwareSerial.h>
 
 #ifdef ESP8266
-static const int gps_RX_pin = D8, gps_TX_pin = D7;  // these were swapped in 1.2 to match board
+static const int gps_RX_pin = D7, gps_TX_pin = D8;  // swapped in 2.0
 static const int led_pin = D6;
 #else
 static const int gps_RX_pin = 4, gps_TX_pin = 3;
@@ -78,6 +78,7 @@ static bool fsInit = false;
 static bool fileStarted = false;
 static int onPinCount = 0;
 static bool gpsLoggingStarted = false;
+static bool activityDetected = false;
 
 struct GPS_LOG_FRAME {
   float latitude;
@@ -126,7 +127,6 @@ float ValueR2 = 30000.0;  //30K Resistor
 const int alanogPin = A0;
 float averageVoltage = 0.0;
 int sampleVoltageCount = 0;
-boolean activityDetected = false;
 
 //Other
 const char fcVariant[5] = "BTFL";
@@ -552,7 +552,17 @@ void loop() {
 #ifdef DEBUG
     debugPrint();
 #else
-    send_msp_to_airunit(vbat);
+  if (activityDetected) {
+    send_msp_to_airunit(vbat); // SEND the data to the DJI unit
+  } else {
+    if (msp.activityDetected()) {
+      activityDetected = true;
+      logOnDebug("****************** Found DJI MSP Activity ******************");
+    } else {
+      logOnDebug("*** Waiting for MSP Activity from DJI Unit ***");
+    }
+  }
+    
 #endif
     general_counter += next_interval_MSP;
   }
