@@ -40,7 +40,7 @@
 #include "OSD_positions_config.h"
 #include <Adafruit_BMP280.h>  // May need to adjust for I2C address #define BMP280_ADDRESS  (0x76)
 
-#define VERSION "1.6"
+#define VERSION "2.0" // compatible with QLiteOSD v2.X boards
 #define BMP_ADDRESS 0x76              // default is 0x77
 #define SPEED_IN_KILOMETERS_PER_HOUR  //if commented out defaults to m/s
 #define FC_FIRMWARE_NAME "Betaflight"
