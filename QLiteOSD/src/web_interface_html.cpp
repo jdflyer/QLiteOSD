@@ -1,29 +1,10 @@
-/*
- *  QLiteOSD is an simple OSD for DJI FPV System:
- *  This is an Arduino project that handles basic OSD functions
- *  from BMP280 to a Simple Voltage Sensor to feed it 
- *  to DJI FPV System.
- *
- * ------------------------------------------------
- *
- * Copyright (C) 2023 David Payne
- * 
- * This software is based on and uses software published by Paul Kurucz (pkuruz):opentelem_to_bst_bridge
- * as well as software d3ngit : djihdfpv_mavlink_to_msp_V2 and crashsalot : VOT_to_DJIFPV
- * 
- * License info: See the LICENSE file at the repo top level
- *
- * THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTIES,
- * WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED
- * TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
- * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
- * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
- */
+#include "config.h"
 
+#ifdef WEB_INTERFACE
 
-static const char HEAD_TITLE[] PROGMEM = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
+#include <Arduino.h>
+
+const char* HEAD_TITLE PROGMEM = "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
                                         "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />"
                                         "<link rel='icon' href='data:;base64,='>"
                                         "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
@@ -116,7 +97,7 @@ static const char HEAD_TITLE[] PROGMEM = "<!DOCTYPE html><html lang='en'><head><
                                         "    </style>"
                                         " </head>";
 
-static const char BODY_MENU[] PROGMEM = "<body>"
+const char* BODY_MENU PROGMEM = "<body>"
                                         "    <header>"
                                         "        <h1>QLiteOSD</h1>"
                                         "    </header>"
@@ -135,7 +116,7 @@ static const char BODY_MENU[] PROGMEM = "<body>"
                                         "    </nav>"
                                         "<section><p>";
                                       
-static const char BODY_END[] PROGMEM = "<br/><br/><br/><hr/>QLiteOSD v%VERSION%</p></section>"
+const char* BODY_END PROGMEM = "<br/><br/><br/><hr/>QLiteOSD v" VERSION "</p></section>"
                                           "    <script>"
                                           "        function toggleMenu() {"
                                           "            var menu = document.getElementById('menu');"
@@ -148,8 +129,18 @@ static const char BODY_END[] PROGMEM = "<br/><br/><br/><hr/>QLiteOSD v%VERSION%<
                                           "    </script>"
                                           "</body></html>";
 
-static const char CONFIG_FORM[] PROGMEM = "<h2>Configuration:</h2><form action='/saveconfig' method='get'>"
-                          "<p><label>Craft Name</label><input type='text' name='craftname_form' value='%CRAFTNAME%' maxlength='14'></p>"
-                          "<p><input name='use_imperial_form' type='checkbox' %USEIMPERIALCHECKED%> Use Imperial Units</p>"
-                          "<p><input name='use_pwm_arm_form' type='checkbox' %USEPWMCHECKED%> Arm with PWM Switch (D5 pin)</p>"
+const char* CONFIG_FORM PROGMEM = "<h2>Configuration:</h2><form action='/configsave' method='get'>"
+                          "<p><label>Craft Name<input type='text' name='CRAFT_NAME_FORM' value='%CRAFT_NAME%' maxlength='14'></label></p>"
+                          "<p><label><input name='USE_IMPERIAL_UNITS_FORM' type='checkbox' %USE_IMPERIAL_UNITS%> Use Imperial Units</label></p>"
+                          "<p><label><input name='USE_PWM_ARM_FORM' type='checkbox' %USE_PWM_ARM%> Arm with PWM Switch (D5 pin)</label></p>"
                           "<button type='submit'>Save</button></form>";                                          
+
+const char* LOGFILES_JAVASCRIPT PROGMEM = "<script>"
+            "for (time of document.getElementsByClassName('timeToConvert')) {"
+                "let timestamp = time.innerHTML;"
+                "let date = new Date(timestamp*1000);"
+                "time.innerHTML = date.toDateString()+' '+date.toLocaleTimeString();"
+            "}"
+        "</script>";
+
+#endif
