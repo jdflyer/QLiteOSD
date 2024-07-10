@@ -39,6 +39,7 @@
 #include "MSP_OSD.h"
 #include "OSD_positions_config.h"
 #include <Adafruit_BMP280.h>  // May need to adjust for I2C address #define BMP280_ADDRESS  (0x76)
+#include <Adafruit_NeoPixel.h>
 
 #define VERSION "2.0" // compatible with QLiteOSD v2.X boards
 #define BMP_ADDRESS 0x76              // default is 0x77
@@ -48,16 +49,13 @@
 #define CONFIG "/conf.txt"
 
 #ifdef USE_GPS
-#include <Adafruit_NeoPixel.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
 #ifdef ESP8266
-static const int gps_RX_pin = D7, gps_TX_pin = D8;  // swapped in 2.0
-static const int led_pin = D6;
+static const int gps_RX_pin = D7, gps_TX_pin = D8;  // swapped in 2.0 because D8 competes with bootloader
 #else
 static const int gps_RX_pin = 4, gps_TX_pin = 3;
-static const int led_pin = 11;
 #endif
 static const uint32_t GPSBaud = 9600;
 
@@ -69,7 +67,6 @@ static const uint32_t GPSBaud = 9600;
 #include <time.h>
 #include "web_interface.h"
 static const uint8_t fileServerModePin = D3;  //Pin used to check what mode the program should start in, if high the filesystem server will be started
-static bool fileServerOn = false;
 static uint32_t gpsLogInterval = 500;
 String ap_ssid = "QLiteOSD";
 static const char *ap_psk = "12345678";
@@ -78,7 +75,6 @@ static bool fsInit = false;
 static bool fileStarted = false;
 static int onPinCount = 0;
 static bool gpsLoggingStarted = false;
-static bool activityDetected = false;
 
 struct GPS_LOG_FRAME {
   float latitude;
@@ -99,10 +95,14 @@ SoftwareSerial gpsSerial(gps_RX_pin, gps_TX_pin);
 
 #ifdef ESP8266
 static const int pwm_arm_pin = D5;
+static const int led_pin = D6;
 #else
 static const int pwm_arm_pin = 10; // pro mini arduino
+static const int led_pin = 11;
 #endif
 static int triggerValue = 1700;
+static bool fileServerOn = false;
+static bool activityDetected = false;
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, led_pin, NEO_GRB + NEO_KHZ800);
 
