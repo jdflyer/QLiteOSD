@@ -48,34 +48,29 @@
 #define FC_FIRMWARE_IDENTIFIER "BTFL"
 #define CONFIG "/conf.txt"
 
-#ifdef USE_GPS
-#include <TinyGPS++.h>
-#include <SoftwareSerial.h>
-
 #ifdef ESP8266
-static const int gps_RX_pin = D8, gps_TX_pin = D7;  // these were swapped in 1.2 to match board
-#else
-static const int gps_RX_pin = 4, gps_TX_pin = 3;
-#endif
-static const uint32_t GPSBaud = 9600;
-
-#ifdef LOG_GPS
+#include <FS.h>
+#include "web_interface.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
 #include <SPI.h>
-#include <FS.h>
 #include <time.h>
-#include "web_interface.h"
+
 static const uint8_t fileServerModePin = D3;  //Pin used to check what mode the program should start in, if high the filesystem server will be started
-static uint32_t gpsLogInterval = 500;
 String ap_ssid = "QLiteOSD";
 static const char *ap_psk = "12345678";
-static File gpsLogFile;
-static bool fsInit = false;
 static bool fileStarted = false;
+static bool fsInit = false;
 static int onPinCount = 0;
-static bool gpsLoggingStarted = false;
 static bool activityDetected = false;
+
+ESP8266WebServer webserver(80);
+
+static uint32_t gpsLogInterval = 500;
+static File gpsLogFile;
+static bool gpsLoggingStarted = false;
 
 struct GPS_LOG_FRAME {
   float latitude;
@@ -86,13 +81,18 @@ struct GPS_LOG_FRAME {
 };
 
 GPS_LOG_FRAME lastFrame;
-
-ESP8266WebServer webserver(80);
 #endif
+
+
+#ifdef ESP8266
+static const int gps_RX_pin = D8, gps_TX_pin = D7;  // these were swapped in 1.2 to match board
+#else
+static const int gps_RX_pin = 4, gps_TX_pin = 3;
+#endif
+static const uint32_t GPSBaud = 9600;
 
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(gps_RX_pin, gps_TX_pin);
-#endif
 
 #ifdef ESP8266
 static const int pwm_arm_pin = D5;
@@ -103,7 +103,6 @@ static const int led_pin = 11;
 #endif
 static int triggerValue = 1700;
 static bool fileServerOn = false;
-
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, led_pin, NEO_GRB + NEO_KHZ800);
 
@@ -201,6 +200,7 @@ void setup() {
   }else {
     logOnDebug("FS Init Fail!!");
   }
+  pinMode(fileServerModePin, INPUT);
 #endif
 
   pixels.begin();
@@ -208,7 +208,6 @@ void setup() {
 
 #ifdef LOG_GPS
   logRemoveOldFiles(10);
-  pinMode(fileServerModePin, INPUT);
 #endif
 
 #ifdef USE_GPS
@@ -218,7 +217,6 @@ void setup() {
 if (USE_PWM_ARM) {
   pinMode(pwm_arm_pin, INPUT_PULLUP);
 }
-
 
   delay(1000);
 
@@ -520,6 +518,7 @@ void loop() {
     webserver.handleClient();
     return;
   }
+  checkTurnOnFileServer();
 #endif
 
   readAltitude();
@@ -532,7 +531,6 @@ void loop() {
     previousMillis_MSP = currentMillis_MSP;
 
 #ifdef LOG_GPS
-    checkTurnOnFileServer();
     logGPS();
 #endif
 
@@ -688,7 +686,7 @@ void logOnDebug(String inValue) {
 #endif
 }
 
-#ifdef LOG_GPS
+#ifdef ESP8266
 //Only used with GPS Option
 void logGPSFrame() {
   while (gpsSerial.available()) {
