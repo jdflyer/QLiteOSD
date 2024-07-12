@@ -25,7 +25,7 @@
 /* 
  *  QLiteOSD
  *
- *  Arduino Nano TX1 to DJI Air unit RX(115200)
+ *  Wemos D1 Mini (ESP8266) / Arduino Nano TX1 to DJI Air unit RX(115200)
  *  BMP280 on I2C (A4 and A5 defaults)
  *  Voltage sensor on A0 pin
  *  GPS addition by GravelAxe -- uses D7-RX and D8-TX
@@ -48,32 +48,27 @@
 #define FC_FIRMWARE_IDENTIFIER "BTFL"
 #define CONFIG "/conf.txt"
 
-#ifdef USE_GPS
-#include <TinyGPS++.h>
-#include <SoftwareSerial.h>
-
 #ifdef ESP8266
-static const int gps_RX_pin = D7, gps_TX_pin = D8;  // swapped in 2.0 because D8 competes with bootloader
-#else
-static const int gps_RX_pin = 4, gps_TX_pin = 3;
-#endif
-static const uint32_t GPSBaud = 9600;
-
-#ifdef LOG_GPS
+#include <FS.h>
+#include "web_interface.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
 #include <SPI.h>
-#include <FS.h>
 #include <time.h>
-#include "web_interface.h"
+
 static const uint8_t fileServerModePin = D3;  //Pin used to check what mode the program should start in, if high the filesystem server will be started
-static uint32_t gpsLogInterval = 500;
 String ap_ssid = "QLiteOSD";
 static const char *ap_psk = "12345678";
-static File gpsLogFile;
-static bool fsInit = false;
 static bool fileStarted = false;
+static bool fsInit = false;
 static int onPinCount = 0;
+
+ESP8266WebServer webserver(80);
+
+static uint32_t gpsLogInterval = 500;
+static File gpsLogFile;
 static bool gpsLoggingStarted = false;
 
 struct GPS_LOG_FRAME {
@@ -85,13 +80,18 @@ struct GPS_LOG_FRAME {
 };
 
 GPS_LOG_FRAME lastFrame;
-
-ESP8266WebServer webserver(80);
 #endif
+
+#ifdef ESP8266
+static const int gps_RX_pin = D7, gps_TX_pin = D8;  // swapped in 2.0 because D8 competes with bootloader
+#else
+static const int gps_RX_pin = 4, gps_TX_pin = 3;
+#endif
+static const uint32_t GPSBaud = 9600;
+static bool activityDetected = false;
 
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(gps_RX_pin, gps_TX_pin);
-#endif
 
 #ifdef ESP8266
 static const int pwm_arm_pin = D5;
@@ -102,7 +102,6 @@ static const int led_pin = 11;
 #endif
 static int triggerValue = 1700;
 static bool fileServerOn = false;
-static bool activityDetected = false;
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, led_pin, NEO_GRB + NEO_KHZ800);
 
@@ -200,6 +199,7 @@ void setup() {
   }else {
     logOnDebug("FS Init Fail!!");
   }
+  pinMode(fileServerModePin, INPUT);
 #endif
 
   pixels.begin();
@@ -207,7 +207,6 @@ void setup() {
 
 #ifdef LOG_GPS
   logRemoveOldFiles(10);
-  pinMode(fileServerModePin, INPUT);
 #endif
 
 #ifdef USE_GPS
@@ -514,6 +513,7 @@ void loop() {
   }
 
 #ifdef ESP8266
+  checkTurnOnFileServer();
   if (fileServerOn) {
     digitalWrite(LED_BUILTIN, LOW);
     webserver.handleClient();
@@ -531,7 +531,6 @@ void loop() {
     previousMillis_MSP = currentMillis_MSP;
 
 #ifdef LOG_GPS
-    checkTurnOnFileServer();
     logGPS();
 #endif
 
@@ -636,7 +635,17 @@ void handleRGBled() {
     pixels.show();
     return;
   }
-
+  if (rgb_mode == "AIRCRAFT") {
+    pixels.fill(pixels.Color(0, 0, 0), 0, 24);
+    pixels.fill(pixels.Color(0, 255, 0), 0, 4);
+    pixels.fill(pixels.Color(255, 255, 255), 4, 4);
+    pixels.fill(pixels.Color(255, 0, 0), 8, 4);
+    if (!flashOn) {
+      pixels.fill(pixels.Color(0, 0, 0), 4, 4);
+    }
+    pixels.show();
+    return;
+  }
 }
 
 
@@ -697,7 +706,7 @@ void logOnDebug(String inValue) {
 #endif
 }
 
-#ifdef LOG_GPS
+#ifdef ESP8266
 //Only used with GPS Option
 void logGPSFrame() {
   while (gpsSerial.available()) {
@@ -801,8 +810,11 @@ void logGPS() {
 
 void checkTurnOnFileServer() {
   if (digitalRead(fileServerModePin) == LOW && !fileServerOn) {
-    onPinCount++;
-    if (onPinCount < 30) {  // only turn on if held for 3 seconds
+    uint32_t currentMillis = millis();
+    if (onPinCount == 0) {
+      onPinCount = currentMillis;
+    }
+    if ((uint32_t)(currentMillis - onPinCount) < 3000) {  // only turn on if held for 3 seconds
       return;
     }
     gpsSerial.end();
@@ -821,6 +833,8 @@ void checkTurnOnFileServer() {
     webserver.on("/reset", handleSystemReset);    //Reset Device
     webserver.begin();
     digitalWrite(LED_BUILTIN, LOW);
+    logOnDebug("*** FILE SERVER ON ***");
+    delay(2000);
   }
   onPinCount = 0;
 }

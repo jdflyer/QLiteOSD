@@ -44,7 +44,7 @@ float arduinoVCC = 4.95;  //Measured Arduino 5V pin voltage
 
 //RGB LED Colors
 static const int NUM_LEDS = 12;
-String rgb_mode = "OFF"; // OFF, ON, STROBE, ALTITUDE, BATTERY
+String rgb_mode = "OFF"; // OFF, ON, STROBE, AIRCRAFT, ALTITUDE, BATTERY
 int redColor = 0;       // 0 - 255
 int greenColor = 255;   // 0 - 255
 int blueColor = 0;      // 0 - 255
