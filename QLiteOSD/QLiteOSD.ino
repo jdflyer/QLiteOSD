@@ -213,10 +213,13 @@ void setup() {
   gpsSerial.begin(GPSBaud);
 #endif
 
-if (USE_PWM_ARM) {
-  pinMode(pwm_arm_pin, INPUT_PULLUP);
-}
+  if (USE_PWM_ARM) {
+    pinMode(pwm_arm_pin, INPUT_PULLUP);
+  }
 
+  if (!USE_DJI_RX_PIN) {
+    activityDetected = true;
+  }
 
   delay(1000);
 

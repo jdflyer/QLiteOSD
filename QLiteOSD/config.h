@@ -34,6 +34,7 @@
 char craftname[15] = "QLiteOSD"; // Do not make larger than 14 characters
 boolean IMPERIAL_UNITS = true;  // Set to false to see units in Metric
 boolean USE_PWM_ARM = false;  // pin D5 ESP8266 -- If commented out arming will occure with altitude change
+boolean USE_DJI_RX_PIN = true; // set to true if using the 2.X QLiteOSD Board with DJI RX pin
 
 //Voltage on Board VCC
 #ifdef ESP8266
