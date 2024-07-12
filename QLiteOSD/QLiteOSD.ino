@@ -25,7 +25,7 @@
 /* 
  *  QLiteOSD
  *
- *  Arduino Nano TX1 to DJI Air unit RX(115200)
+ *  Wemos D1 Mini (ESP8266) / Arduino Nano TX1 to DJI Air unit RX(115200)
  *  BMP280 on I2C (A4 and A5 defaults)
  *  Voltage sensor on A0 pin
  *  GPS addition by GravelAxe -- uses D7-RX and D8-TX
@@ -64,7 +64,6 @@ static const char *ap_psk = "12345678";
 static bool fileStarted = false;
 static bool fsInit = false;
 static int onPinCount = 0;
-static bool activityDetected = false;
 
 ESP8266WebServer webserver(80);
 
@@ -90,6 +89,7 @@ static const int gps_RX_pin = D8, gps_TX_pin = D7;  // these were swapped in 1.2
 static const int gps_RX_pin = 4, gps_TX_pin = 3;
 #endif
 static const uint32_t GPSBaud = 9600;
+static bool activityDetected = false;
 
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(gps_RX_pin, gps_TX_pin);
