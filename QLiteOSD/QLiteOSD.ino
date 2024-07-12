@@ -513,12 +513,12 @@ void loop() {
   }
 
 #ifdef ESP8266
+  checkTurnOnFileServer();
   if (fileServerOn) {
     digitalWrite(LED_BUILTIN, LOW);
     webserver.handleClient();
     return;
   }
-  checkTurnOnFileServer();
 #endif
 
   readAltitude();
