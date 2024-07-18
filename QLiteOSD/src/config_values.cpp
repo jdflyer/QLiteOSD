@@ -11,6 +11,13 @@ const configValue_t configValues[CONFIG_VALUE_COUNT] = {
 
     {"BOARD_VCC", &BOARD_VCC, CONFIG_VALUE_FLOAT},
 
+#ifdef USE_LEDS
+    {"RGB_MODE", &RGB_MODE, CONFIG_VALUE_STRING, 16},
+    {"RED_VALUE", &RED_VALUE, CONFIG_VALUE_UINT8},
+    {"GREEN_VALUE", &GREEN_VALUE, CONFIG_VALUE_UINT8},
+    {"BLUE_VALUE", &BLUE_VALUE, CONFIG_VALUE_UINT8},
+#endif
+
     {"OSD_ALTITUDE_POS", &msp_osd_config.osd_altitude_pos, CONFIG_VALUE_UINT16},
     {"OSD_AVG_CELL_VOLTAGE_POS", &msp_osd_config.osd_avg_cell_voltage_pos, CONFIG_VALUE_UINT16},
     {"OSD_MAIN_BATT_VOLTAGE_POS", &msp_osd_config.osd_main_batt_voltage_pos, CONFIG_VALUE_UINT16},
@@ -25,6 +32,16 @@ const configValue_t configValues[CONFIG_VALUE_COUNT] = {
 };
 
 char CRAFT_NAME[15] = CRAFT_NAME_DEFAULT; // Do not make larger than 14 characters
+
+#ifdef USE_LEDS
+
+char RGB_MODE[16] = RGB_MODE_DEFAULT;
+
+uint8_t RED_VALUE = RED_VALUE_DEFAULT;
+uint8_t GREEN_VALUE = GREEN_VALUE_DEFAULT;
+uint8_t BLUE_VALUE = BLUE_VALUE_DEFAULT;
+
+#endif
 
 bool USE_IMPERIAL_UNITS = USE_IMPERIAL_UNITS_DEFAULT;  // Set to false to see units in Metric
 

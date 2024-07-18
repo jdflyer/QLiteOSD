@@ -5,9 +5,7 @@
 #include "craft.h"
 #include "filesystem.h"
 
-#ifdef DEBUG
-#include "MSP_OSD.h"
-#endif
+#include "MSP_OSD.h" //Used for the debugLog def
 
 bool gpsLogging = false;
 

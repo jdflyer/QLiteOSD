@@ -50,10 +50,17 @@ extern const char* HEAD_TITLE PROGMEM;
 extern const char* BODY_MENU PROGMEM;
 extern const char* BODY_END PROGMEM;
 extern const char* CONFIG_FORM PROGMEM;
+extern const char* CONFIG_FORM_SAVE PROGMEM;
 extern const char* CONFIG_FORM_OSD PROGMEM;
 extern const char* CONFIG_FORM_OSD_2 PROGMEM;
 extern const char* CONFIG_JAVASCRIPT PROGMEM;
 extern const char* CONFIG_OSD PROGMEM;
 extern const char* LOGFILES_JAVASCRIPT PROGMEM;
+
+#ifdef USE_LEDS
+extern const char* CONFIG_FORM_LED PROGMEM;
+extern const char* CONFIG_RGB_OPTIONS PROGMEM;
+extern const char* CONFIG_RGB_JS PROGMEM;
+#endif
 
 #endif

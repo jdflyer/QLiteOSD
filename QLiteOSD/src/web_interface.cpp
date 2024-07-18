@@ -5,6 +5,7 @@
 #include "craft.h"
 #include "filesystem.h"
 #include "gpsLog.h"
+#include "led.h"
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -40,6 +41,9 @@ void webInterfaceInit() {
     webserver.begin();
     
     digitalWrite(LED_BUILTIN, LOW);
+#ifdef USE_LEDS
+    ledWebserverColors();
+#endif
 }
 
 void webInterfaceLoop() {
@@ -159,6 +163,22 @@ void webInterfaceConfigure() {
         webserver.sendContent(form);
     }
 
+#ifdef USE_LEDS
+    {
+        String options = FPSTR(CONFIG_RGB_OPTIONS);
+        options.replace(">" + String(RGB_MODE) + "<", " selected>" + String(RGB_MODE) + "<");
+        webserver.sendContent(options);
+    }
+
+    {
+        String form = FPSTR(CONFIG_FORM_LED);
+        replaceFormConfig(form);
+        webserver.sendContent(form);
+    }
+
+    webserver.sendContent_P(CONFIG_RGB_JS);
+#endif
+
     {
         String form = FPSTR(CONFIG_FORM_OSD);
         replaceFormConfig(form);
@@ -170,6 +190,8 @@ void webInterfaceConfigure() {
         replaceFormConfig(form);
         webserver.sendContent(form);
     }
+
+    webserver.sendContent_P(CONFIG_FORM_SAVE);
 
     {
         String formJs = FPSTR(CONFIG_JAVASCRIPT);

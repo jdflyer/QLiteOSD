@@ -28,6 +28,7 @@
 
 #define ESP8266_TARGET  // Uncommment this line if using the ESP8266 (Wemos D1 Mini)
 #define USE_GPS  //comment out to disable.  Reads and displays GPS data - requires Nano 328 due to file size
+#define USE_LEDS // comment out to disable. Adds controls for an LED strip
 
 #define BOARD_VERSION 11
 // #define BOARD_VERSION 20
@@ -85,11 +86,20 @@
 #define gps_TX_pin D8
 #endif
 
+#ifdef USE_LEDS
+#define LED_PIN D6
+#endif
+
 #else
 #define BOARD_VCC_DEFAULT 4.95f  //Measured Arduino 5V pin voltage
 #define PWM_ARM_PIN 10
 #define gps_RX_pin 4
 #define gps_TX_pin 3
+
+#ifdef USE_LEDS
+#define LED_PIN 11
+#endif
+
 #endif
 
 #ifdef WEB_INTERFACE
@@ -162,6 +172,28 @@ extern uint16_t OSD_GPS_SATS_POS;
 
 extern struct msp_osd_config_t msp_osd_config;
 
+#ifdef USE_LEDS
+
+#define NUM_LEDS 12
+#define LED_UPDATE_INTERVAL 10 // in ticks
+
+#define RGB_MODE_DEFAULT "ON"
+
+#define RED_VALUE_DEFAULT 0
+#define GREEN_VALUE_DEFAULT 255
+#define BLUE_VALUE_DEFAULT 0
+
+extern char RGB_MODE[16];
+extern uint8_t RED_VALUE;
+extern uint8_t GREEN_VALUE;
+extern uint8_t BLUE_VALUE;
+
+#define LED_CONFIG_NUM 4
+
+#else
+#define LED_CONFIG_NUM 0
+#endif
+
 enum configType_e {
     CONFIG_VALUE_UINT16,
     CONFIG_VALUE_UINT8,
@@ -177,7 +209,8 @@ struct configValue_t {
     uint32_t optionalData;
 };
 
-#define CONFIG_VALUE_COUNT 15
+#define CONFIG_VALUE_COUNT (15 + LED_CONFIG_NUM)
+
 extern const configValue_t configValues[CONFIG_VALUE_COUNT];
 
 // config.cpp functions

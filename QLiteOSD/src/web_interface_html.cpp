@@ -181,10 +181,80 @@ const char* CONFIG_FORM PROGMEM = "<h2>Configuration:</h2><form action='/configs
                           "<input type='number' id='BOARD_VCC_FORM' value='%BOARD_VCC%' name='BOARD_VCC_FORM' min='3.00' max='6.00' step='0.01' required></p>"
                           
                           "</br>"
-                          
-                          // Save                                    
-                          "<button type='submit'>Save</button></form>\r\n"
                           ;
+
+const char* CONFIG_FORM_SAVE PROGMEM = "<button type='submit'>Save</button></form>\r\n";
+
+#ifdef USE_LEDS
+const char* CONFIG_FORM_LED PROGMEM = 
+                          "</select> (D6 pin)</p>"
+                          "	<div id='rgb-section'>"
+                          "		<div class='slider-container'>"
+                          "			<label for='red'>Red</label>"
+                          "			<input type='range' id='red' class='slider' min='0' max='255' value='%RED_VALUE%'>"
+                          "			<input type='text' name='RED_VALUE_FORM' id='red-input' class='rgb-input' readonly>"
+                          "		</div>"
+                          "		<div class='slider-container'>"
+                          "			<label for='green'>Green</label>"
+                          "			<input type='range' id='green' class='slider' min='0' max='255' value='%GREEN_VALUE%'>"
+                          "			<input type='text' name='GREEN_VALUE_FORM' id='green-input' class='rgb-input' readonly>"
+                          "		</div>"
+                          "		<div class='slider-container'>"
+                          "			<label for='blue'>Blue</label>"
+                          "			<input type='range' id='blue' class='slider' min='0' max='255' value='%BLUE_VALUE%'>"
+                          "			<input type='text' name='BLUE_VALUE_FORM' id='blue-input' class='rgb-input' readonly>"
+                          "		</div>"
+                          "		<div id='color-display'></div>"
+                          "	</div>";
+
+const char* CONFIG_RGB_OPTIONS PROGMEM = 
+                          "</br><label for='toggle-select'>Select LED mode:</label>"
+                          "<select id='toggle-select' name='RGB_MODE_FORM'>"
+                          "<option value='OFF'>OFF</option>"
+                          "    <option value='ON'>ON</option>"
+                          "    <option value='STROBE'>STROBE</option>"
+                          "    <option value='AIRCRAFT'>AIRCRAFT</option>"
+                          "    <option value='ALTITUDE'>ALTITUDE</option>"
+                          "    <option value='BATTERY'>BATTERY</option>";
+
+const char* CONFIG_RGB_JS PROGMEM = "	<script>"
+                                    "		const redSlider = document.getElementById('red');"
+                                    "		const greenSlider = document.getElementById('green');"
+                                    "		const blueSlider = document.getElementById('blue');"
+                                    "		const colorDisplay = document.getElementById('color-display');"
+                                    "		const redValue = document.getElementById('red-input');"
+                                    "		const greenValue = document.getElementById('green-input');"
+                                    "		const blueValue = document.getElementById('blue-input');"
+                                    "		const toggleSelect = document.getElementById('toggle-select');"
+                                    "   const displaySection = document.getElementById('rgb-section');"
+                                    "		function updateColor() {"
+                                    "			const red = redSlider.value;"
+                                    "			const green = greenSlider.value;"
+                                    "			const blue = blueSlider.value;"
+                                    "			const rgbColor = `rgb(${red}, ${green}, ${blue})`;"
+                                    "			colorDisplay.style.backgroundColor = rgbColor;"
+                                    "			redValue.value = red;"
+                                    "			greenValue.value = green;"
+                                    "			blueValue.value = blue;"
+                                    "		}"
+                                    "		redSlider.addEventListener('input', updateColor);"
+                                    "		greenSlider.addEventListener('input', updateColor);"
+                                    "		blueSlider.addEventListener('input', updateColor);"
+                                    "		updateColor();"
+                                    "   toggleSelect.addEventListener('change', function() {"
+                                    "     if (toggleSelect.value === 'ON' || toggleSelect.value === 'STROBE') {"
+                                    "       displaySection.style.display = 'block';"
+                                    "     } else {"
+                                    "       displaySection.style.display = 'none';"
+                                    "     }"
+                                    "   });"
+                                    "   if (toggleSelect.value === 'ON' || toggleSelect.value === 'STROBE') {"
+                                    "      displaySection.style.display = 'block';"
+                                    "   } else {"
+                                    "     displaySection.style.display = 'none';"
+                                    "   }"
+                                    "	</script>";      
+#endif
 
 const char* CONFIG_FORM_OSD PROGMEM =                           // OSD Config
                           "    <h1>OSD Layout</h1>"
