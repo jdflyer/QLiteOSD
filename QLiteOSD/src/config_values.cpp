@@ -7,7 +7,21 @@
 const configValue_t configValues[CONFIG_VALUE_COUNT] = {
     {"CRAFT_NAME",&CRAFT_NAME,CONFIG_VALUE_STRING,14}, // 14 character limit
     {"USE_IMPERIAL_UNITS",&USE_IMPERIAL_UNITS,CONFIG_VALUE_BOOL},
-    {"USE_PWM_ARM",&USE_PWM_ARM,CONFIG_VALUE_BOOL}
+    {"USE_PWM_ARM",&USE_PWM_ARM,CONFIG_VALUE_BOOL},
+
+    {"BOARD_VCC", &BOARD_VCC, CONFIG_VALUE_FLOAT},
+
+    {"OSD_ALTITUDE_POS", &msp_osd_config.osd_altitude_pos, CONFIG_VALUE_UINT16},
+    {"OSD_AVG_CELL_VOLTAGE_POS", &msp_osd_config.osd_avg_cell_voltage_pos, CONFIG_VALUE_UINT16},
+    {"OSD_MAIN_BATT_VOLTAGE_POS", &msp_osd_config.osd_main_batt_voltage_pos, CONFIG_VALUE_UINT16},
+    {"OSD_CRAFTNAME_POS", &msp_osd_config.osd_craft_name_pos, CONFIG_VALUE_UINT16},
+    {"OSD_GPS_SATS_POS", &OSD_GPS_SATS_POS, CONFIG_VALUE_UINT16},
+    {"OSD_HOME_DIR_POS", &msp_osd_config.osd_home_dir_pos, CONFIG_VALUE_UINT16},
+    {"OSD_HOME_DIST_POS", &msp_osd_config.osd_home_dist_pos, CONFIG_VALUE_UINT16},
+    {"OSD_GPS_SPEED_POS", &msp_osd_config.osd_gps_speed_pos, CONFIG_VALUE_UINT16},
+    {"OSD_GPS_LAT_POS", &msp_osd_config.osd_gps_lat_pos, CONFIG_VALUE_UINT16},
+    {"OSD_GPS_LON_POS", &msp_osd_config.osd_gps_lon_pos, CONFIG_VALUE_UINT16},
+    {"OSD_CROSSHAIRS_POS", &msp_osd_config.osd_crosshairs_pos, CONFIG_VALUE_UINT16}
 };
 
 char CRAFT_NAME[15] = CRAFT_NAME_DEFAULT; // Do not make larger than 14 characters
@@ -15,6 +29,10 @@ char CRAFT_NAME[15] = CRAFT_NAME_DEFAULT; // Do not make larger than 14 characte
 bool USE_IMPERIAL_UNITS = USE_IMPERIAL_UNITS_DEFAULT;  // Set to false to see units in Metric
 
 bool USE_PWM_ARM = USE_PWM_ARM_DEFAULT;
+
+float BOARD_VCC = BOARD_VCC_DEFAULT;
+
+uint16_t OSD_GPS_SATS_POS = GPS_SATS_POS_DEFAULT;
 
 /**
  * Default values for the OSD Values are given here, some OSD elements
@@ -30,39 +48,39 @@ msp_osd_config_t msp_osd_config = {
     56,                  // osd_item_count
     0,                   // alt_alarm
     OSD_HIDDEN,          // osd_rssi_value_pos
-    MAIN_BATT_VOLT_POS,  // osd_main_batt_voltage_pos
-    CROSSHAIRS_POS,      // osd_crosshairs_pos
+    MAIN_BATT_VOLT_POS_DEFAULT,  // osd_main_batt_voltage_pos
+    CROSSHAIRS_POS_DEFAULT,      // osd_crosshairs_pos
     OSD_HIDDEN,          // osd_artificial_horizon_pos
     OSD_HIDDEN,          // osd_horizon_sidebars_pos
     OSD_HIDDEN,          // osd_item_timer_1_pos
     OSD_HIDDEN,          // osd_item_timer_2_pos
     OSD_HIDDEN,          // osd_flymode_pos
-    CRAFTNAME_POS,       // osd_craft_name_pos
+    CRAFTNAME_POS_DEFAULT,       // osd_craft_name_pos
     OSD_HIDDEN,          // osd_throttle_pos_pos
     OSD_HIDDEN,          // osd_vtx_channel_pos
     OSD_HIDDEN,          // osd_current_draw_pos
     OSD_HIDDEN,          // osd_mah_drawn_pos
-    GPS_SPEED_POS,       // osd_gps_speed_pos
-    GPS_SATS_POS,        // osd_gps_sats_pos
-    ALTITUDE_POS,        // osd_altitude_pos
+    GPS_SPEED_POS_DEFAULT,       // osd_gps_speed_pos
+    GPS_SATS_POS_DEFAULT,        // osd_gps_sats_pos
+    ALTITUDE_POS_DEFAULT,        // osd_altitude_pos
     OSD_HIDDEN,          // osd_roll_pids_pos
     OSD_HIDDEN,          // osd_pitch_pids_pos
     OSD_HIDDEN,          // osd_yaw_pids_pos
     OSD_HIDDEN,          // osd_power_pos
     OSD_HIDDEN,          // osd_pidrate_profile_pos
     OSD_HIDDEN,          // osd_warnings_pos
-    AVG_CELL_VOLT_POS,   // osd_avg_cell_voltage_pos
-    GPS_LON_POS,         // osd_gps_lon_pos
-    GPS_LAT_POS,         // osd_gps_lat_pos
+    AVG_CELL_VOLT_POS_DEFAULT,   // osd_avg_cell_voltage_pos
+    GPS_LON_POS_DEFAULT,         // osd_gps_lon_pos
+    GPS_LAT_POS_DEFAULT,         // osd_gps_lat_pos
     OSD_HIDDEN,          // osd_debug_pos
     OSD_HIDDEN,          // osd_pitch_angle_pos
     OSD_HIDDEN,          // osd_roll_angle_pos
     OSD_HIDDEN,          // osd_main_batt_usage_pos
     OSD_HIDDEN,          // osd_disarmed_pos
-    GPS_HOME_DIR_POS,    // osd_home_dir_pos
-    GPS_HOME_DIST_POS,   // osd_home_dist_pos
+    GPS_HOME_DIR_POS_DEFAULT,    // osd_home_dir_pos
+    GPS_HOME_DIST_POS_DEFAULT,   // osd_home_dist_pos
     OSD_HIDDEN,          // osd_numerical_heading_pos
-    NUM_VARIO_POS,       // osd_numerical_vario_pos
+    NUM_VARIO_POS_DEFAULT,       // osd_numerical_vario_pos
     OSD_HIDDEN,          // osd_compass_bar_pos
     OSD_HIDDEN,          // osd_esc_tmp_pos
     OSD_HIDDEN,          // osd_esc_rpm_pos

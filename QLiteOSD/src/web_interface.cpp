@@ -50,17 +50,17 @@ void webInterfaceSendHeader() {
   webserver.sendHeader("Cache-Control", "no-cache, no-store");
   webserver.sendHeader("Pragma", "no-cache");
   webserver.sendHeader("Expires", "-1");
-  webserver.chunkedResponseModeStart(200,"text/html");
-//   webserver.setContentLength(CONTENT_LENGTH_UNKNOWN);
-//   webserver.send(200, "text/html", "");
-  webserver.sendContent(FPSTR(HEAD_TITLE));
-  webserver.sendContent(FPSTR(BODY_MENU));
+//   webserver.chunkedResponseModeStart(200,"text/html");
+  webserver.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  webserver.send(200, "text/html", "");
+  webserver.sendContent_P(HEAD_TITLE);
+  webserver.sendContent_P(BODY_MENU);
 }
 
 void webInterfaceSendFooter() {
-  webserver.sendContent(FPSTR(BODY_END));
-//   webserver.sendContent("");
-  webserver.chunkedResponseFinalize();
+  webserver.sendContent_P(BODY_END);
+  webserver.sendContent("");
+//   webserver.chunkedResponseFinalize();
   webserver.client().stop();
 }
 
@@ -107,7 +107,7 @@ void webInterfaceHome() {
 
     webserver.sendContent("</ul>");
 
-    webserver.sendContent(FPSTR(LOGFILES_JAVASCRIPT));
+    webserver.sendContent_P(LOGFILES_JAVASCRIPT);
 
 #endif
 
@@ -122,13 +122,13 @@ void webInterfaceHome() {
     webInterfaceSendFooter();
 }
 
-void webInterfaceConfigure() {
-    webInterfaceSendHeader();
-
-    String form = FPSTR(CONFIG_FORM);
-
+static void replaceFormConfig(String& form) {
     for (int i = 0; i < CONFIG_VALUE_COUNT; i++) {
         String replacementKey = String("%")+configValues[i].key+"%";
+
+        // if (form.indexOf(replacementKey) == -1) {
+        //     continue;
+        // }
 
         switch (configValues[i].type) {
         case CONFIG_VALUE_STRING:
@@ -143,10 +143,43 @@ void webInterfaceConfigure() {
         case CONFIG_VALUE_UINT8:
             form.replace(replacementKey,String(*(uint8_t*)configValues[i].globalValue));
             break;
+        case CONFIG_VALUE_FLOAT:
+            form.replace(replacementKey,String(*(float*)configValues[i].globalValue));
+            break;
         }
     }
+}
 
-    webserver.sendContent(form);
+void webInterfaceConfigure() {
+    webInterfaceSendHeader();
+
+    {
+        String form = FPSTR(CONFIG_FORM);
+        replaceFormConfig(form);
+        webserver.sendContent(form);
+    }
+
+    {
+        String form = FPSTR(CONFIG_FORM_OSD);
+        replaceFormConfig(form);
+        webserver.sendContent(form);
+    }
+
+    {
+        String form = FPSTR(CONFIG_FORM_OSD_2);
+        replaceFormConfig(form);
+        webserver.sendContent(form);
+    }
+
+    {
+        String formJs = FPSTR(CONFIG_JAVASCRIPT);
+        formJs.replace("%READVALUE%",String(analogRead(ANALOG_PIN)));
+        formJs.replace("%VALUER1%",String(ValueR1));
+        formJs.replace("%VALUER2%",String(ValueR2));
+        webserver.sendContent(formJs);
+    }
+
+    webserver.sendContent_P(CONFIG_OSD);
 
     webInterfaceSendFooter();
 }
@@ -174,6 +207,9 @@ void webInterfaceConfigSave() {
             break;
         case CONFIG_VALUE_UINT8:
             *(uint8_t*)configValues[i].globalValue = (uint8_t)argValue.toInt();
+            break;
+        case CONFIG_VALUE_FLOAT:
+            *(float*)configValues[i].globalValue = argValue.toFloat();
             break;
         }
     }

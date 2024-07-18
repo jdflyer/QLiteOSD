@@ -67,12 +67,12 @@
 #define PWM_TRIGGER_VALUE 1700
 
 #ifdef ESP8266_TARGET
-#define arduinoVCC 3.25f  //Measured ESP8266 3.3 pin voltage
+#define BOARD_VCC_DEFAULT 3.25f  //Measured ESP8266 3.3 pin voltage
 #define PWM_ARM_PIN D5
 #define gps_RX_pin D8 // swapped in 1.2 to match board
 #define gps_TX_pin D7 // swapped in 1.2 to match board
 #else
-#define arduinoVCC 4.95f  //Measured Arduino 5V pin voltage
+#define BOARD_VCC_DEFAULT 4.95f  //Measured Arduino 5V pin voltage
 #define PWM_ARM_PIN 10
 #define gps_RX_pin 4
 #define gps_TX_pin 3
@@ -114,35 +114,37 @@
 
 // General OSD Positions
 
-#define MAIN_BATT_VOLT_POS OSD_POS(1,2)
-#define CROSSHAIRS_POS     OSD_POS(14,6)
-#define CRAFTNAME_POS      OSD_POS(0,0)
-#define ALTITUDE_POS       OSD_POS(0,6)
-#define AVG_CELL_VOLT_POS  OSD_POS(1,3)
-#define NUM_VARIO_POS      OSD_POS(1,7)
+#define MAIN_BATT_VOLT_POS_DEFAULT OSD_POS(1,2)
+#define CROSSHAIRS_POS_DEFAULT     OSD_POS(14,6)
+#define CRAFTNAME_POS_DEFAULT      OSD_POS(0,0)
+#define ALTITUDE_POS_DEFAULT       OSD_POS(0,6)
+#define AVG_CELL_VOLT_POS_DEFAULT  OSD_POS(1,3)
+#define NUM_VARIO_POS_DEFAULT      OSD_POS(1,7)
 
 
 // GPS OSD Positions
 
 #ifdef USE_GPS
-#define GPS_SATS_POS      OSD_POS(26,0)
-#define GPS_HOME_DIR_POS  OSD_POS(15,1)
-#define GPS_HOME_DIST_POS OSD_POS(1,9)
-#define GPS_SPEED_POS     OSD_POS(1,8)
-#define GPS_LAT_POS       OSD_POS(0,12)
-#define GPS_LON_POS       OSD_POS(0,13)
+#define GPS_SATS_POS_DEFAULT      OSD_POS(26,0)
+#define GPS_HOME_DIR_POS_DEFAULT  OSD_POS(15,1)
+#define GPS_HOME_DIST_POS_DEFAULT OSD_POS(1,9)
+#define GPS_SPEED_POS_DEFAULT     OSD_POS(1,8)
+#define GPS_LAT_POS_DEFAULT       OSD_POS(0,12)
+#define GPS_LON_POS_DEFAULT       OSD_POS(0,13)
 #else
-#define GPS_SATS_POS      OSD_HIDDEN
-#define GPS_HOME_DIR_POS  OSD_HIDDEN
-#define GPS_HOME_DIST_POS OSD_HIDDEN
-#define GPS_SPEED_POS     OSD_HIDDEN
-#define GPS_LAT_POS       OSD_HIDDEN
-#define GPS_LON_POS       OSD_HIDDEN
+#define GPS_SATS_POS_DEFAULT      OSD_HIDDEN
+#define GPS_HOME_DIR_POS_DEFAULT  OSD_HIDDEN
+#define GPS_HOME_DIST_POS_DEFAULT OSD_HIDDEN
+#define GPS_SPEED_POS_DEFAULT     OSD_HIDDEN
+#define GPS_LAT_POS_DEFAULT       OSD_HIDDEN
+#define GPS_LON_POS_DEFAULT       OSD_HIDDEN
 #endif
 
 extern char CRAFT_NAME[15]; // Do not make larger than 14 characters
 extern bool USE_IMPERIAL_UNITS;  // Set to false to see units in Metric
 extern bool USE_PWM_ARM;  // pin D5 ESP8266 -- If commented out arming will occure with altitude change
+extern float BOARD_VCC;
+extern uint16_t OSD_GPS_SATS_POS;
 
 extern struct msp_osd_config_t msp_osd_config;
 
@@ -150,7 +152,8 @@ enum configType_e {
     CONFIG_VALUE_UINT16,
     CONFIG_VALUE_UINT8,
     CONFIG_VALUE_BOOL,
-    CONFIG_VALUE_STRING
+    CONFIG_VALUE_STRING,
+    CONFIG_VALUE_FLOAT
 };
 
 struct configValue_t {
@@ -160,7 +163,7 @@ struct configValue_t {
     uint32_t optionalData;
 };
 
-#define CONFIG_VALUE_COUNT 3
+#define CONFIG_VALUE_COUNT 15
 extern const configValue_t configValues[CONFIG_VALUE_COUNT];
 
 // config.cpp functions

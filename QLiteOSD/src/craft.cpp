@@ -88,7 +88,7 @@ void CraftState::readVoltage() {
 
 void CraftState::sampleVoltage() {
   int readValue = analogRead(ANALOG_PIN);
-  voltageSamples += (readValue * (arduinoVCC / 1024.0f)) * (1.0f + (ValueR2 / ValueR1));
+  voltageSamples += (readValue * (BOARD_VCC / 1024.0f)) * (1.0f + (ValueR2 / ValueR1));
   sampleVoltageCount++;
 }
 

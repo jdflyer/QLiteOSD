@@ -105,10 +105,10 @@ void tick() {
   if (flight_ticks % GPS_SATELITE_BLINK_UPDATE_INTERVAL == 0) {
     if (!craftState.gpsHomeSet) {
       static bool satsOn = false;
-      msp_osd_config.osd_gps_sats_pos = satsOn ? GPS_SATS_POS : OSD_HIDDEN;
+      msp_osd_config.osd_gps_sats_pos = satsOn ? OSD_GPS_SATS_POS : OSD_HIDDEN;
       satsOn = !satsOn;
     }else {
-      msp_osd_config.osd_gps_sats_pos = GPS_SATS_POS;
+      msp_osd_config.osd_gps_sats_pos = OSD_GPS_SATS_POS;
     }
   }
 #endif

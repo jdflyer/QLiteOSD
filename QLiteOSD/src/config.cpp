@@ -43,6 +43,9 @@ void configRead() {
             case CONFIG_VALUE_UINT8:
                 *(uint8_t*)configValues[i].globalValue = (uint8_t)valueString.toInt();
                 break;
+            case CONFIG_VALUE_FLOAT:
+                *(float*)configValues[i].globalValue = valueString.toFloat();
+              break;
             }
 
             break;
@@ -69,6 +72,9 @@ void configWrite() {
         break;
       case CONFIG_VALUE_UINT8:
         configFile.println(String(*(uint8_t*)configValues[i].globalValue));
+        break;
+      case CONFIG_VALUE_FLOAT:
+        configFile.println(String(*(float*)configValues[i].globalValue));
         break;
       }
   }
