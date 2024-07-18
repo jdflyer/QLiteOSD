@@ -16,6 +16,7 @@ void ledWebserverColors() {
 
 void ledInit() {
     pixels.begin();
+    ledUpdate(); // Set the LEDs to their initial values
 }
 
 void ledUpdate() {
