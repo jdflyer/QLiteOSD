@@ -25,7 +25,7 @@
 /*
  *  QLiteOSD
  *
- *  Arduino Nano TX1 to DJI Air unit RX(115200)
+ *  Wemos D1 Mini (ESP8266) / Arduino Nano TX1 to DJI Air unit RX(115200)
  *  BMP280 on I2C (A4 and A5 defaults)
  *  Voltage sensor on A0 pin
  *  GPS addition by GravelAxe -- uses D7-RX and D8-TX
