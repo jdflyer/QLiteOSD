@@ -29,6 +29,9 @@
 #define ESP8266_TARGET  // Uncommment this line if using the ESP8266 (Wemos D1 Mini)
 #define USE_GPS  //comment out to disable.  Reads and displays GPS data - requires Nano 328 due to file size
 
+#define BOARD_VERSION 11
+// #define BOARD_VERSION 20
+
 #if defined(ESP8266_TARGET)
 #define WEB_INTERFACE // uncomment to disable the web interface
 #endif
@@ -36,7 +39,7 @@
 #if defined(WEB_INTERFACE) && defined(USE_GPS) // do not remove or comment this line out
 #define LOG_GPS //uncomment to log position and altitude data to the internal filesystem (requires a pushbutton to be added to switch to wifi mode)
 #endif
-#define DEBUG    // uncomment this line to debug in Serial Monitor 
+// #define DEBUG    // uncomment this line to debug in Serial Monitor 
 
 // Hardcoded config
 #define VERSION "2.0"
@@ -66,11 +69,22 @@
 
 #define PWM_TRIGGER_VALUE 1700
 
+#if BOARD_VERSION >= 20
+#define USE_DJI_RX_PIN true
+#endif
+
 #ifdef ESP8266_TARGET
 #define BOARD_VCC_DEFAULT 3.25f  //Measured ESP8266 3.3 pin voltage
 #define PWM_ARM_PIN D5
-#define gps_RX_pin D8 // swapped in 1.2 to match board
-#define gps_TX_pin D7 // swapped in 1.2 to match board
+
+#if BOARD_VERSION < 20
+#define gps_RX_pin D8
+#define gps_TX_pin D7
+#elif BOARD_VERSION >= 20
+#define gps_RX_pin D7
+#define gps_TX_pin D8
+#endif
+
 #else
 #define BOARD_VCC_DEFAULT 4.95f  //Measured Arduino 5V pin voltage
 #define PWM_ARM_PIN 10

@@ -132,7 +132,25 @@ void tick() {
   if (!gpsLogging)
     mspOsd.debugPrint();
 #else
+
+#ifdef USE_DJI_RX_PIN
+  static bool mspStarted = false;
+
+  if (mspStarted) {
+    mspOsd.sendCraftMSP();
+  }else {
+    if (mspOsd.msp.activityDetected()) {
+      mspStarted = true;
+      debugLog("****************** Found DJI MSP Activity ******************");
+    }else {
+      debugLog("*** Waiting for MSP Activity from DJI Unit ***");
+    }
+  }
+
+#else
   mspOsd.sendCraftMSP();
+#endif
+
 #endif
 }
 
