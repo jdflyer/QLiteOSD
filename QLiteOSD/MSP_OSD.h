@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-#include "libraries/MSP.h"
+#include "src/libraries/MSP.h"
 #include "config.h"
 
 #define MSP_OSD_CONFIG            84        //out message         Get osd settings - betaflight

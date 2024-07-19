@@ -35,14 +35,14 @@
 
 #include "src/libraries/MSP.h"
 
-#include "src/config.h"
-#include "src/MSP_OSD.h"
-#include "src/craft.h"
+#include "config.h"
+#include "MSP_OSD.h"
+#include "craft.h"
 
-#include "src/filesystem.h"
-#include "src/web_interface.h"
-#include "src/gpsLog.h"
-#include "src/led.h"
+#include "filesystem.h"
+#include "web_interface.h"
+#include "gpsLog.h"
+#include "led.h"
 
 /* ----------------------------------------------------- */
 void setup()
