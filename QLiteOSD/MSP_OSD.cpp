@@ -98,7 +98,7 @@ void MspOSD::sendCraftMSP() {
   // msp_status_BF_t status_BF;
 
   //MSP_OSD_CONFIG
-  msp_osd_config.units = USE_IMPERIAL_UNITS;
+  msp_osd_config.units = !USE_IMPERIAL_UNITS;
   msp.send(MSP_OSD_CONFIG, &msp_osd_config, sizeof(msp_osd_config));
 }
 
